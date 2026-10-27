@@ -1,0 +1,534 @@
+import { AnimeShow, PublishedAnimeItem, CreatorStats, CommunityPost } from '../types';
+
+export const BRAND_LOGO_URL =
+  'https://lh3.googleusercontent.com/aida-public/AB6AXuDQk5h4lC7RS3BRaiDPKNzjV9Pr-7oe79e_PS-g260C75jAzMkdKS4UOwm_ZRALHmXpIUneQciBwc_buFKF5cij7o_HPzn2VvMtgM26DqsuKwBiARpF6NdWb15vRmfNuRzj5Oep0YikLCPmpwLT_JOW1cfzW_WGXh8IZiRq6pQjmBmNhtF-8HmFrSj6R9LJs7hq6ooQQgBtyZjOYbi-5pdrXND7EfMEuJBhJw5TdBe7UwHBkXzYIj_57A';
+
+export const DEFAULT_AVATARS = {
+  arjun: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDzkJ48L6iIt4nhAP3uw5ek1dxD9KhN2DCrK0sqf7yEnDaY-O5UvGy5bor3LhtI68kZevmZNYWGtMFZ0nL-n2wcBmk_HoVt-0F3a8OB1UIVl8VpzeiH2soOaGhYWLdmhu8s09K98INxVWquJyJXxSI2rdnlxkjufDlEVqYnUGkfbV4Zi-NmFlhWubpuIRgGWX1j__CePuMiOJ1Mjh0qh-u4vmbMXQOaGEkXFzRrhJNo9frslNcuI3S77w',
+  mobile: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD51mT1sqZr0n0RxalqxIfBfzGeWAvDGiV0jsGCQeIXdsCbHo1UNv4eWaJoRiCBz7WnXWFoJdtKnXUDoUTtdHWsw0J9OiBd2ijWy7r92Br88EdUY_YeXomnxMCsol93kIrED75n-VzcLIUzL8GCbGHBWgN5bRr74m3Rcwuzxi4ADpv2J_COSxc4tH_TkpD7-cmHOeEjzhyqf2ty1IIa0HiaH_WIan1SVdudMXtwIlEzJngYtan6fhvZXQ',
+  player: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD_aA1XqQ_CzLaajGUTDx7h2zawaTCHl7hesC7cZU4nInNIlHqbTuY5McH8RYO9zYaMMBv6rhId8MB8S6zuqDIE3SriXiqhyeCzYTja6T0MN5bbFVqHQuf__R0Q-zwjyZXCtkK9ij0U9jDbtmS3TKPnG04UEfMbH9nZvwjUOP5e16lYnXxtojFkqGoEvZ-QWhOKdOaU0kUBq62nPgZ2toMG9xhRKCqqqTzqkt46Y4eD7IQ7qeFsgrY6wQ',
+  creator: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCyyRmI45pa1zdvVBtogT-CXhPAPpHu8aD4UF_dYsYT-RwcbymGU8Bes0wiUp8LN1eGAi7kV0tyKrEmdO7cJCXLdVbbGkK3GDnlZCP8Vb_8F4ZlfZRiv4FaJvyUgxGjiXdBnC-v1TSeJ_qLQzf-Xz5G_6lCLV8cLaAPwDVNQPEoJN0mSiOFtluFPeefIBq05xo6IWUVHuzqzlGOb-_Az43ryRlIyC72yEccUtv2YEPhPCuPx7Juo5bXTQ',
+  aarya: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDq9KVd-PSJetdHIOoUtOQFZv23kkYGyM3BAjap_7SSw5GG4dy6gzOF1tNgOe-LwWbOhjtdr-3eoyrjoEJ8_TOJrxQiSP32Yu5vZ2AF7gVz6RT2Nrx5hMXs6MM9xUod62KVu-X3Msj4ZN4jS2YAyz0ORJTul0m2geehRhsY1P6vRKvJVk9sI1jhcQJKQXX3zWQFfoa4axBC7YR2ZTAiBW7SPYEM5O39Qig8slESww-aaJKCFHTI8HI4Jg'
+};
+
+export const ANIME_SHOWS: AnimeShow[] = [
+  {
+    id: 'shadow-of-sakura',
+    title: 'Shadow of Sakura',
+    japaneseTitle: '桜の影 (The Shadow of Sakura)',
+    bannerImage:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuDsWlgDP6JUMJmzHFZ7-7i3lduAzct8pRy_Bnh8FmqPLBY1OYaNIzmU9ifRgp9MS69R0jNLo0eD5EQMSjztEGqt2aOB-0YN14WGKV6sY7gQT3ngaffo__iZIa7Wb4K4VYr85j5Wfw-090txoIYKL6mKoQ72EIaGemB5aUnR43bjo1-miomIr67jML3Cg_-LSQdDgJ4ANoBJ984F2c2_RR0gVOvv1vATJpccwvaYveG38wR53hy7OsJqwQ',
+    posterImage:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuD40aH-TP8mguqoWvOi2kEISetQOcRdElKfCNCcAp1GxeJX4NiRtWjyofWGhm8_RPJrsXIw_Gh6lkYiluJ0Ot8f58xYY9sP5pvRHSGI-cUB6MNS9LCX2b10Ca7ZLTk9Xohw9Z47a24j3bPJsxFjpUTogAhMrZc2qEhRlSlpvWJYxydvIQeku_6LXcV3-tF2yw1vTxf1G_CYcTa7hROvQs_iVsG7ZG0GdhhBxZIryqF5e5J-nR8r3Od_Rg',
+    rating: 4.9,
+    year: 2024,
+    releaseSeason: 'Winter 2024',
+    genres: ['Action', 'Fantasy', 'Drama'],
+    tags: ['Cyber-Feudal', 'Ronin', 'Supernatural', 'Original'],
+    description:
+      'In a neo-feudal era where ancient spirits clash with advanced technology, a rogue samurai must protect the last sacred cherry blossom tree from a corrupt empire. As the petals fall, so does the delicate balance between the physical and ethereal realms.',
+    studio: 'AniGalnexo Originals',
+    director: 'Kenji Sato',
+    cast: ['Ryo Kimura', 'Yui Ishikawa', 'Takehito Koyasu', 'Dev Patel (Dub)'],
+    licenseExpiresDays: 120,
+    communityScore: 94,
+    isPremium: true,
+    isOriginal: true,
+    featured: true,
+    totalViews: '3.8M',
+    creator: {
+      id: 'aarya-sharma',
+      name: 'Aarya Sharma',
+      role: 'Lead Character Designer',
+      avatar: DEFAULT_AVATARS.aarya,
+      quote:
+        '"Blending traditional Indian motifs with neo-Tokyo aesthetics to create something entirely new."',
+      verified: true,
+      followersCount: 48200,
+      worksCount: 6,
+      isFollowing: true,
+    },
+    episodes: [
+      {
+        id: 'sos-ep-1',
+        episodeNumber: 1,
+        title: 'The Blade Awakes',
+        duration: '24:00',
+        durationSeconds: 1440,
+        thumbnail:
+          'https://lh3.googleusercontent.com/aida-public/AB6AXuDuZ0KmzCo7F9eqX-fziNb8jOb7RA5s5SJFyimdhLXJZEFy-Axij5ZTMjT-rlO0KSSxbizVwD19PzFR0JyS8uFC6QYhZR7Cwm1duxKUR1YEuFO_SMGdZ9dKdubDv1yr3CmDk0Zhz8onVmuMrNpqfKOkNkrC4lXffZqoh7GJcwhGNqJlgMUrrjsf2qeIfzKYHWRASqXBObMHO1dGZKh9FoSFG1gvCsCO8sMkGNdmj5mKpf0gGN6JS0HGNg',
+        synopsis:
+          'Ronin Kael stumbles upon a forgotten shrine and awakens an ancient spirit that binds itself to his broken blade.',
+        isWatched: true,
+        watchedPercentage: 100,
+        isPremium: false,
+      },
+      {
+        id: 'sos-ep-2',
+        episodeNumber: 2,
+        title: 'Echoes of the Past',
+        duration: '23:45',
+        durationSeconds: 1425,
+        thumbnail:
+          'https://lh3.googleusercontent.com/aida-public/AB6AXuCOAxczq_5lyKDKxU6AQp1oCgEntsRn2c-gcFntZDDhrCvFjjxWr_lex31GbPP1-QsnsXw92VFYx6kcyh2-0FpaKAXxY6vU07bmYZS-pJNNivYMca-0an6yypv5x_gCdaRHeaxh0pU-lPZ74UR7782Ch5zxl-tUtHTMLKe07q-IHojNMLYScGPrvR4WF-QFReJUbXnCELiRnAJM5xLkm1d2_dLTF2m6kXT0_tf-TKbdgc-KqLt7HTS1uA',
+        synopsis:
+          "Hunted by the Shogunate's elite mechanical guard, Kael must navigate the treacherous neon-lit lower levels of Neo-Kyoto.",
+        isWatched: true,
+        watchedPercentage: 100,
+        isPremium: false,
+      },
+      {
+        id: 'sos-ep-3',
+        episodeNumber: 3,
+        title: 'Crimson Petals Fall',
+        duration: '24:12',
+        durationSeconds: 1452,
+        thumbnail:
+          'https://lh3.googleusercontent.com/aida-public/AB6AXuB-xFZubSQIHZPFYRWOeGKLiO90dHmI0BAhG-iH1GOWnjfhfq2xut16EeOxQOfn3mazlrT8BXFPFjHSeuutTivKX7z98YvX5dbc9HUrQDg9XN6xH9F9Wql2bvOfboHpFduV0FVrlNm9LO9O7WeN654H8Bewbh9WAZwaHEUkaL97RWDm_Mm1gTE9MEyrDGQIpMrx11T9ucJ7Am1KwdcOJRUapQsPoCOq8yvcHJIigAs7AtXoIx43ZtwlyQ',
+        synopsis:
+          'A desperate battle ensues against a towering cyber-oni. Kael struggles to control the spirit within his blade.',
+        isWatched: false,
+        watchedPercentage: 45,
+        isWatching: true,
+        isPremium: false,
+      },
+      {
+        id: 'sos-ep-4',
+        episodeNumber: 4,
+        title: 'The Silent City',
+        duration: '23:10',
+        durationSeconds: 1390,
+        thumbnail:
+          'https://lh3.googleusercontent.com/aida-public/AB6AXuBn2Qrggh8tRhlL4InE0Z4yRuoGwSahjFNneK8Bh_Z9naXkCs26yw-1YElnvuJSUAEqxZ9EfrzELo-o_-yGsT7dnlxNlHVa8q3G1uWOGBBbQ3ycB-XqA8kWvRQlmPWv0PoBjjS-s29VYxtNWZfseiZBmzZs6_VhRsb4vRj8E6w-F98OR1YrW5_CE1mqLJtB6nRQjYceCCvl5DhMENphfpawc6kO2zEEd4uNEViKmeuFZ8fLiVJPdGqaPw',
+        synopsis:
+          'Seeking refuge, Kael arrives at a seemingly abandoned sector, only to find it governed by a rogue AI.',
+        isWatched: false,
+        watchedPercentage: 0,
+        isPremium: true,
+      },
+      {
+        id: 'sos-ep-5',
+        episodeNumber: 5,
+        title: 'Heart of the Lotus',
+        duration: '24:30',
+        durationSeconds: 1470,
+        thumbnail:
+          'https://lh3.googleusercontent.com/aida-public/AB6AXuAJNofgPQwliwup3BGk2ixI95YvVVygHWMt15I1AwONkM9CJ0Fzo41XEONZV5_ICOlXzYaryaHiYVevqfrkp5VEFc0XiBgz-23ktyRbGSQ8j6mdi2_V6X70LobwnycC_kAcQg8ivtrKGzMZnM5JodwWJ8uDWsEKqRR5eL2Sr6aC0Lt3RakHDMP2CoMNsr3MYhL9xI6Dsx231vq9kKSxPUT4-H09SSpxUr2DmDsOwNUlfCpAM4kZh41vvA',
+        synopsis:
+          'Deep inside the mechanical greenhouse, the rebel leader reveals the origins of the sacred blossom virus.',
+        isWatched: false,
+        watchedPercentage: 0,
+        isPremium: true,
+      },
+    ],
+  },
+  {
+    id: 'moonlit-warriors',
+    title: 'Moonlit Warriors',
+    japaneseTitle: '月下の戦士たち',
+    bannerImage:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuBLKAMJyFFNV-EwhEkE4SvfMkCzkue-3xaM7e0YxaUy0yOw6Bh7EyGE6iYMh0sl8-1CfoD3Go9BOdeTh0UNVe5dXbW_9mJFmIPttGxoKeFhlxGr6Wte86iKI7mrq2h1ZtN3b7ECVYUDq2Oqy3MPHaaPSIvZLs-Wpj9_VTwzQcRdrb9pEM-nXFesU3fs5YM4ae8UnYErkxVj2k_f1GvSt5Ycd477PMaNK4l_cXCDRCuN2KWMoYZsKSBTKQ',
+    posterImage:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuBLKAMJyFFNV-EwhEkE4SvfMkCzkue-3xaM7e0YxaUy0yOw6Bh7EyGE6iYMh0sl8-1CfoD3Go9BOdeTh0UNVe5dXbW_9mJFmIPttGxoKeFhlxGr6Wte86iKI7mrq2h1ZtN3b7ECVYUDq2Oqy3MPHaaPSIvZLs-Wpj9_VTwzQcRdrb9pEM-nXFesU3fs5YM4ae8UnYErkxVj2k_f1GvSt5Ycd477PMaNK4l_cXCDRCuN2KWMoYZsKSBTKQ',
+    rating: 4.9,
+    year: 2023,
+    releaseSeason: 'Fall 2023',
+    genres: ['Action', 'Fantasy'],
+    tags: ['Night Clan', 'Swordmaster', 'Supernatural'],
+    description:
+      'Under the silver gleam of the full moon, an elite order of shadow blade wielders defend the mortal realm from abyssal incursions.',
+    studio: 'Studio Mappa India',
+    director: 'Vikramaditya Sengupta',
+    cast: ['Siddharth Roy', 'Tara Sen', 'Gautam Singhania'],
+    licenseExpiresDays: 240,
+    communityScore: 92,
+    isPremium: true,
+    isOriginal: false,
+    featured: true,
+    totalViews: '2.9M',
+    creator: {
+      id: 'studio-alpha',
+      name: 'Studio Alpha',
+      role: 'Lead Animation Studio',
+      avatar: DEFAULT_AVATARS.creator,
+      quote: '"Crafting legendary animated sagas with Indian storytelling soul."',
+      verified: true,
+      followersCount: 92400,
+      worksCount: 14,
+    },
+    episodes: [
+      {
+        id: 'mw-ep-1',
+        episodeNumber: 1,
+        title: 'The Silver Crescent',
+        duration: '22:45',
+        durationSeconds: 1365,
+        thumbnail:
+          'https://lh3.googleusercontent.com/aida-public/AB6AXuBLKAMJyFFNV-EwhEkE4SvfMkCzkue-3xaM7e0YxaUy0yOw6Bh7EyGE6iYMh0sl8-1CfoD3Go9BOdeTh0UNVe5dXbW_9mJFmIPttGxoKeFhlxGr6Wte86iKI7mrq2h1ZtN3b7ECVYUDq2Oqy3MPHaaPSIvZLs-Wpj9_VTwzQcRdrb9pEM-nXFesU3fs5YM4ae8UnYErkxVj2k_f1GvSt5Ycd477PMaNK4l_cXCDRCuN2KWMoYZsKSBTKQ',
+        synopsis: 'A novice moon guardian encounters an ancient dread entity in the ruins of Sarnath.',
+        isWatched: true,
+        watchedPercentage: 100,
+        isPremium: true,
+      },
+    ],
+  },
+  {
+    id: 'beyond-the-stars',
+    title: 'Beyond the Stars',
+    japaneseTitle: '星々の彼方へ',
+    bannerImage:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuAkMdHmic0z5uxFiaaCbrkT_eV5fIsYQRnSXNT-Kk-oTA3u85M7brkBdfjQuLa9WRliZzbcjPXNmp2Gsq5PZjdyCibTqPhYCLI2TZXJ3LUnAfnO2UrGxy0gZVC43BkSxOKKMagb70MQ-awi-efoCY7T6ijXEhxkZyFemydfFxTZoyqDAKOGk5BSndma9aH3kiCzHMt87NzRonie0JBhNoP0ivJLbwyltKxrCDGC5mgqT6yx40nPy-vnww',
+    posterImage:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuAkMdHmic0z5uxFiaaCbrkT_eV5fIsYQRnSXNT-Kk-oTA3u85M7brkBdfjQuLa9WRliZzbcjPXNmp2Gsq5PZjdyCibTqPhYCLI2TZXJ3LUnAfnO2UrGxy0gZVC43BkSxOKKMagb70MQ-awi-efoCY7T6ijXEhxkZyFemydfFxTZoyqDAKOGk5BSndma9aH3kiCzHMt87NzRonie0JBhNoP0ivJLbwyltKxrCDGC5mgqT6yx40nPy-vnww',
+    rating: 4.7,
+    year: 2024,
+    releaseSeason: 'Spring 2024',
+    genres: ['Sci-Fi', 'Mecha'],
+    tags: ['Space Opera', 'Pilots', 'Nebula'],
+    description:
+      'Aethel-7 mecha pilot Dhruv embarks on an interstellar expedition to decode cosmic signals emanating from the core of the Orion Nebula.',
+    studio: 'CosmoTrigger Animation',
+    director: 'Hiroyuki Sawano & Ananya Ghosh',
+    cast: ['Kabir Mehta', 'Mira Nair', 'Rajesh Khera'],
+    licenseExpiresDays: 310,
+    communityScore: 89,
+    isPremium: false,
+    isOriginal: true,
+    featured: true,
+    totalViews: '1.7M',
+    creator: {
+      id: 'cosmo-studio',
+      name: 'Cosmo Studio',
+      role: 'Mecha & 3D CGI Producer',
+      avatar: DEFAULT_AVATARS.mobile,
+      quote: '"Pushing the boundaries of cosmic animation with epic synthesizer scores."',
+      verified: true,
+      followersCount: 31500,
+      worksCount: 4,
+    },
+    episodes: [
+      {
+        id: 'bts-ep-1',
+        episodeNumber: 1,
+        title: 'Launch Velocity',
+        duration: '25:10',
+        durationSeconds: 1510,
+        thumbnail:
+          'https://lh3.googleusercontent.com/aida-public/AB6AXuAkMdHmic0z5uxFiaaCbrkT_eV5fIsYQRnSXNT-Kk-oTA3u85M7brkBdfjQuLa9WRliZzbcjPXNmp2Gsq5PZjdyCibTqPhYCLI2TZXJ3LUnAfnO2UrGxy0gZVC43BkSxOKKMagb70MQ-awi-efoCY7T6ijXEhxkZyFemydfFxTZoyqDAKOGk5BSndma9aH3kiCzHMt87NzRonie0JBhNoP0ivJLbwyltKxrCDGC5mgqT6yx40nPy-vnww',
+        synopsis: 'The orbital station comes under siege as the experimental Aethel prototype fires its reactor.',
+        isWatched: false,
+        watchedPercentage: 0,
+        isPremium: false,
+      },
+    ],
+  },
+  {
+    id: 'aether-gears',
+    title: 'Aether Gears',
+    japaneseTitle: 'エーテル・ギアーズ',
+    bannerImage:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuBX-x-nY3-TQnUikGdRMF3---tVEpmCBl3I2EdSiaWqLDGF4CC6zazfCfdd-3go01IVOzx6q3ICEoPQJfnejjs-EU5E2aLH8_SE92koxcjBjbnai3JaTfsGU142WOfPgT2m8lcExRw6NbLMuB_wTSUllLiyeTZzeQ7LUn0Men6zAr7ZWSM-IfzNwwuOk--ptWAwk_58qKjspSPNS0ibnm10VyPefXcBnZP0ktW6kGBd126sCdpb3uJ64w',
+    posterImage:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuBX-x-nY3-TQnUikGdRMF3---tVEpmCBl3I2EdSiaWqLDGF4CC6zazfCfdd-3go01IVOzx6q3ICEoPQJfnejjs-EU5E2aLH8_SE92koxcjBjbnai3JaTfsGU142WOfPgT2m8lcExRw6NbLMuB_wTSUllLiyeTZzeQ7LUn0Men6zAr7ZWSM-IfzNwwuOk--ptWAwk_58qKjspSPNS0ibnm10VyPefXcBnZP0ktW6kGBd126sCdpb3uJ64w',
+    rating: 4.8,
+    year: 2023,
+    genres: ['Sci-Fi', 'Action'],
+    tags: ['Steampunk', 'Sky Islands', 'Ghibli Vibe'],
+    description:
+      'Young engineer Kiran discovers ancient clockwork artifacts on floating sky islands that can harness boundless atmospheric aether energy.',
+    studio: 'SkyForge Works',
+    director: 'Prashant Roy',
+    cast: ['Neil Sharma', 'Kavita Joshi'],
+    licenseExpiresDays: 180,
+    communityScore: 91,
+    isPremium: false,
+    creator: {
+      id: 'skyforge',
+      name: 'SkyForge Works',
+      role: 'Indie Art Collective',
+      avatar: DEFAULT_AVATARS.player,
+      quote: '"Building worlds in the clouds with handcrafted wonder."',
+      verified: false,
+      followersCount: 15200,
+      worksCount: 3,
+    },
+    episodes: [],
+  },
+  {
+    id: 'neon-shinobi',
+    title: 'Neon Shinobi',
+    japaneseTitle: 'ネオン・忍',
+    bannerImage:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuDUEwNfR46cIWp82kkSd7Wy-MUoAV-e-vpnN4XpbBDUaP-c4hezE9bw8SPz9FESgzTdoLQXX0eFtaL6HD3TNR-gzPyvrkW06uOLirtOYSsLXwcjJMSfUCb8LqymWc1mmMOZDdGWOY9VYUpAqk0mBVdcC_HbjNNy6VCi3NOpH0gGYBsT_qX_TJi7aMLiMYQ9wybB_TQylLhbRnwEjlQ6-ol5ze-m3dnZo5GwfjyA8XItsE6AaVE5qynKkg',
+    posterImage:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuDUEwNfR46cIWp82kkSd7Wy-MUoAV-e-vpnN4XpbBDUaP-c4hezE9bw8SPz9FESgzTdoLQXX0eFtaL6HD3TNR-gzPyvrkW06uOLirtOYSsLXwcjJMSfUCb8LqymWc1mmMOZDdGWOY9VYUpAqk0mBVdcC_HbjNNy6VCi3NOpH0gGYBsT_qX_TJi7aMLiMYQ9wybB_TQylLhbRnwEjlQ6-ol5ze-m3dnZo5GwfjyA8XItsE6AaVE5qynKkg',
+    rating: 4.8,
+    year: 2024,
+    genres: ['Cyberpunk', 'Thriller'],
+    tags: ['Neo-Noir', 'Dual Blades', 'Synthwave'],
+    description:
+      'In a rain-slicked metropolis flooded with synthetic neon and corrupt syndicates, dual-blade assassin Maya executes high-stakes infiltrations.',
+    studio: 'CyberNinja Labs',
+    director: 'Karthik Raman',
+    cast: ['Maya Krishnan', 'Aditya Sen'],
+    licenseExpiresDays: 95,
+    communityScore: 95,
+    isPremium: true,
+    creator: {
+      id: 'aarya-sharma',
+      name: 'Aarya Sharma',
+      role: 'Lead Character Designer',
+      avatar: DEFAULT_AVATARS.aarya,
+      quote: '"Blending traditional Indian motifs with neo-Tokyo aesthetics."',
+      verified: true,
+      followersCount: 48200,
+      worksCount: 6,
+    },
+    episodes: [],
+  },
+  {
+    id: 'beasts-of-the-waste',
+    title: 'Beasts of the Waste',
+    japaneseTitle: '荒野の神獣',
+    bannerImage:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuD-bFp0Cy4qXU-OrlmwvAN4JsGdIysQTqN-jCrPtgA-yYF6zAtiFSGToUIvbFJP54JVgbytZT1U6pU6IZZ-P7ZJwq3UyCfQ81DRGXJjOELMc1HqKTPMslE0OE8WpwoVfUA7lLB32waFX-NM7EL6SOrdbKLY2scCcQrlrI-Rwf9at2Z5Aa4AHO1wSa7vC2QSV9U0pIno1QKAlaOgbxGQbrp84BqTmvVWO35UeqDinKVrV1AAUE5P3pcbfQ',
+    posterImage:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuD-bFp0Cy4qXU-OrlmwvAN4JsGdIysQTqN-jCrPtgA-yYF6zAtiFSGToUIvbFJP54JVgbytZT1U6pU6IZZ-P7ZJwq3UyCfQ81DRGXJjOELMc1HqKTPMslE0OE8WpwoVfUA7lLB32waFX-NM7EL6SOrdbKLY2scCcQrlrI-Rwf9at2Z5Aa4AHO1wSa7vC2QSV9U0pIno1QKAlaOgbxGQbrp84BqTmvVWO35UeqDinKVrV1AAUE5P3pcbfQ',
+    rating: 4.6,
+    year: 2022,
+    genres: ['Fantasy', 'Adventure'],
+    tags: ['Colossal Beasts', 'Desert Quest', 'Epic Lore'],
+    description:
+      'Nomadic warriors brave golden dust storms and towering chimera titans to restore water spirits to the desolate Thar ruins.',
+    studio: 'DuneMyth Studios',
+    director: 'Samarjeet Rathore',
+    cast: ['Ranveer Gill', 'Sunita Rao'],
+    licenseExpiresDays: 360,
+    communityScore: 88,
+    isPremium: false,
+    creator: {
+      id: 'dunemyth',
+      name: 'DuneMyth Studios',
+      role: 'Fantasy Production Group',
+      avatar: DEFAULT_AVATARS.creator,
+      quote: '"Epic folklore reborn in high fantasy animation."',
+      verified: true,
+      followersCount: 22800,
+      worksCount: 5,
+    },
+    episodes: [],
+  },
+  {
+    id: 'lotus-code',
+    title: 'Lotus Code',
+    japaneseTitle: '蓮の暗号',
+    bannerImage:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuAJNofgPQwliwup3BGk2ixI95YvVVygHWMt15I1AwONkM9CJ0Fzo41XEONZV5_ICOlXzYaryaHiYVevqfrkp5VEFc0XiBgz-23ktyRbGSQ8j6mdi2_V6X70LobwnycC_kAcQg8ivtrKGzMZnM5JodwWJ8uDWsEKqRR5eL2Sr6aC0Lt3RakHDMP2CoMNsr3MYhL9xI6Dsx231vq9kKSxPUT4-H09SSpxUr2DmDsOwNUlfCpAM4kZh41vvA',
+    posterImage:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuAJNofgPQwliwup3BGk2ixI95YvVVygHWMt15I1AwONkM9CJ0Fzo41XEONZV5_ICOlXzYaryaHiYVevqfrkp5VEFc0XiBgz-23ktyRbGSQ8j6mdi2_V6X70LobwnycC_kAcQg8ivtrKGzMZnM5JodwWJ8uDWsEKqRR5eL2Sr6aC0Lt3RakHDMP2CoMNsr3MYhL9xI6Dsx231vq9kKSxPUT4-H09SSpxUr2DmDsOwNUlfCpAM4kZh41vvA',
+    rating: 4.9,
+    year: 2024,
+    genres: ['Drama', 'Sci-Fi'],
+    tags: ['Cybernetics', 'Sentience', 'Emotional'],
+    description:
+      'An android gardener gains spontaneous emotional sentience while nurturing an extinct bioluminescent lotus flower in Neo-Varanasi.',
+    studio: 'AniGalnexo Originals',
+    director: 'Tanvi Deshmukh',
+    cast: ['Ishan Roy', 'Meera Kapoor'],
+    licenseExpiresDays: 200,
+    communityScore: 97,
+    isPremium: true,
+    isOriginal: true,
+    creator: {
+      id: 'studio-alpha',
+      name: 'Studio Alpha',
+      role: 'Lead Animation Studio',
+      avatar: DEFAULT_AVATARS.creator,
+      quote: '"Crafting legendary animated sagas with Indian storytelling soul."',
+      verified: true,
+      followersCount: 92400,
+      worksCount: 14,
+    },
+    episodes: [],
+  },
+  {
+    id: 'neon-genesis-reborn',
+    title: 'Neon Genesis Reborn',
+    japaneseTitle: '新世紀リボーン',
+    bannerImage:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuAOzjEgZ7EZmXu3FRGn5UiD-pTaUv7GRF7wgY3SVEiDwVDzfVCzBSZ_MDjo5GzfrDR3R8ghCHz2ieqJsHMR5X4tkCOvPmfGJAsFpSgkRG9yKPjCWbfrv6LIgRzXH8VYVA38w4LRHQn7ZpT7MLCZCISVJ-pSKJbVuYeNzkim7dCluCpwqNcXDBo2ff8hQtf1DsaLRM18VYzA5mbqz6kUKwKxVLh-GcfP8lHykRTas2cn14GGtqK19hHD6g',
+    posterImage:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuAOzjEgZ7EZmXu3FRGn5UiD-pTaUv7GRF7wgY3SVEiDwVDzfVCzBSZ_MDjo5GzfrDR3R8ghCHz2ieqJsHMR5X4tkCOvPmfGJAsFpSgkRG9yKPjCWbfrv6LIgRzXH8VYVA38w4LRHQn7ZpT7MLCZCISVJ-pSKJbVuYeNzkim7dCluCpwqNcXDBo2ff8hQtf1DsaLRM18VYzA5mbqz6kUKwKxVLh-GcfP8lHykRTas2cn14GGtqK19hHD6g',
+    rating: 4.8,
+    year: 2024,
+    genres: ['Mecha', 'Sci-Fi'],
+    tags: ['Cyber Armor', 'Giant Mech', 'Apocalypse'],
+    description:
+      'In a neon-drenched future, humanity’s last hope rests in the giant armored frame of the Shadow of Sakura. Witness the beginning of the rebellion.',
+    studio: 'Trigger India',
+    director: 'Arvind Swaminathan',
+    cast: ['Yash Vardhan', 'Shreya Ghosal'],
+    licenseExpiresDays: 145,
+    communityScore: 93,
+    isPremium: false,
+    creator: {
+      id: 'studio-alpha',
+      name: 'Studio Alpha',
+      role: 'Lead Animation Studio',
+      avatar: DEFAULT_AVATARS.creator,
+      quote: '"Crafting legendary animated sagas with Indian storytelling soul."',
+      verified: true,
+      followersCount: 92400,
+      worksCount: 14,
+    },
+    episodes: [],
+  },
+  {
+    id: 'golden-hour-high',
+    title: 'Golden Hour High',
+    japaneseTitle: '放課後の黄昏',
+    bannerImage:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuAEKApzo9bBgsdPmR5gcWreICut-ZZPkU8dNluAnKOdMLBByIFxR0Lrtxm9StniwAuXQk6lvlk3195EHjPX9U6v8Dy1XcvaNDGRaXzT92VJ-p-yVn4MMMyT6YBvgQXvizMvz_o0emPF9_dHce1haZPDZP-GHw1-s4-PQea4CzCux_O0YtGYWKHr76wmNxFiqFAUb5HSm90m-eEuxEWnMnty48C4ADypmps4STWMJC8F1Ci8BMv3qPZ2cg',
+    posterImage:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuAEKApzo9bBgsdPmR5gcWreICut-ZZPkU8dNluAnKOdMLBByIFxR0Lrtxm9StniwAuXQk6lvlk3195EHjPX9U6v8Dy1XcvaNDGRaXzT92VJ-p-yVn4MMMyT6YBvgQXvizMvz_o0emPF9_dHce1haZPDZP-GHw1-s4-PQea4CzCux_O0YtGYWKHr76wmNxFiqFAUb5HSm90m-eEuxEWnMnty48C4ADypmps4STWMJC8F1Ci8BMv3qPZ2cg',
+    rating: 4.7,
+    year: 2023,
+    genres: ['Slice of Life', 'Romance'],
+    tags: ['School', 'Nostalgia', 'Acoustic'],
+    description:
+      'Two aspiring manga artists bond across sunsets in the courtyard of their Shimla boarding academy, dreaming of Tokyo animation stages.',
+    studio: 'Kyoto Animation India',
+    director: 'Rohan Mehra',
+    cast: ['Ria Sen', 'Arnav Roy'],
+    licenseExpiresDays: 300,
+    communityScore: 96,
+    isPremium: false,
+    creator: {
+      id: 'indie-slice',
+      name: 'Shimla Breeze Studios',
+      role: 'Slice of Life Specialists',
+      avatar: DEFAULT_AVATARS.mobile,
+      quote: '"Capturing golden memories and quiet teenage dreams."',
+      verified: true,
+      followersCount: 18400,
+      worksCount: 2,
+    },
+    episodes: [],
+  },
+  {
+    id: 'fist-of-the-azure',
+    title: 'Fist of the Azure',
+    japaneseTitle: '蒼穹の拳',
+    bannerImage:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuDgEraYl3q0bPLDXh8b5XAXZSVKwnQDo1CKk0BXDqmbZJ2_ISlsRyNngQr7Lst5wPJjOoV4K5JV3g867dGaZYdcgL8z8WqKooP_x0oWPaxZ9CEoVsg_0lg-o-5P2cSJpok__cxBBuEN3Nlglb5KAoXKL-FtL_3avAlmkONdu174jF2SjAPpzmdSIaClGxk-Rfcl5-NhJmq6Upf94Jn7Tj_7TjZbzrU3swrJ8XvQk_nLZXt9SJqrdYSf5A',
+    posterImage:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuDgEraYl3q0bPLDXh8b5XAXZSVKwnQDo1CKk0BXDqmbZJ2_ISlsRyNngQr7Lst5wPJjOoV4K5JV3g867dGaZYdcgL8z8WqKooP_x0oWPaxZ9CEoVsg_0lg-o-5P2cSJpok__cxBBuEN3Nlglb5KAoXKL-FtL_3avAlmkONdu174jF2SjAPpzmdSIaClGxk-Rfcl5-NhJmq6Upf94Jn7Tj_7TjZbzrU3swrJ8XvQk_nLZXt9SJqrdYSf5A',
+    rating: 4.8,
+    year: 2024,
+    genres: ['Action', 'Shonen'],
+    tags: ['Martial Arts', 'Azure Lightning', 'Tournament'],
+    description:
+      'A young martial artist unlocks the celestial Kalaripayattu lightning aura to defend the mountain monastery from rival shadow warlords.',
+    studio: 'Mappa South Asia',
+    director: 'Kiran Gurung',
+    cast: ['Suraj Nambiar', 'Pooja Hegde'],
+    licenseExpiresDays: 210,
+    communityScore: 94,
+    isPremium: false,
+    creator: {
+      id: 'studio-alpha',
+      name: 'Studio Alpha',
+      role: 'Lead Animation Studio',
+      avatar: DEFAULT_AVATARS.creator,
+      quote: '"Crafting legendary animated sagas with Indian storytelling soul."',
+      verified: true,
+      followersCount: 92400,
+      worksCount: 14,
+    },
+    episodes: [],
+  },
+];
+
+export const CREATOR_DASHBOARD_STATS: CreatorStats = {
+  totalViews: '2.4M',
+  viewsGrowth: 12.5,
+  followers: 14205,
+  followersGrowth: 8.2,
+  revenueEarned: 124500,
+  revenueGrowth: 24.1,
+};
+
+export const PUBLISHED_ANIME_LIST: PublishedAnimeItem[] = [
+  {
+    id: 'neon-ronin',
+    title: 'Neon Ronin',
+    thumbnail:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuBuNn5p5owf04IKvsPx5KpIpjZwe2dDXptx6F_ikBDzIag6zSar8yJxHmIjgV9xOXnT8edZJJ9e1OugsafGK0LkdVCuYttInTu-QHBo_jR9yNzzuFhCWxO8IoDYMMAg9spW2YNwkBIthut6G6pHdUsmtspLy1p8Umka1HUdH2Fx6kXJmesYSr0cVmpSdLb4EaTb784KkqpE0PA6WtXdpu6DXcKPocgOBneTiHzVWAVO9TAE88jhQ2_G9A',
+    episodesCount: 12,
+    status: 'Live',
+    views: '1.2M',
+    revenue: '₹68,400',
+    uploadedDate: '2024-01-15',
+    genre: 'Cyberpunk, Action',
+  },
+  {
+    id: 'shadow-of-sakura',
+    title: 'Shadow of Sakura',
+    thumbnail:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuC0jCclC-Oo9Ra_UMU9dDjpZFg6Fc2T4xah4Via2BOY38QS8n1C_p-QdHrhRzIPimFaxRBJMs_A4Jd9Bc0GrX4sDV8m1K4NrtxVJ61ZxyjvnFZuvWqFl_O4E4kJF8HfHuLaQxNlDgMVrIY6J-G7x7DfCi21H-MwTwTkw5k_A2VSsQ3diCzyUWEGsZ2PxD5bL7HdMrV-kfEHq8ziPhA-qtNnZSH1Vzuo_j1pCGsXHmNl6Sp2nXtxD0HTnA',
+    episodesCount: 5,
+    status: 'Pending',
+    views: '--',
+    revenue: '--',
+    uploadedDate: '2024-02-18',
+    genre: 'Feudal, Action',
+  },
+  {
+    id: 'moonlit-warriors',
+    title: 'Moonlit Warriors',
+    thumbnail:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuBLKAMJyFFNV-EwhEkE4SvfMkCzkue-3xaM7e0YxaUy0yOw6Bh7EyGE6iYMh0sl8-1CfoD3Go9BOdeTh0UNVe5dXbW_9mJFmIPttGxoKeFhlxGr6Wte86iKI7mrq2h1ZtN3b7ECVYUDq2Oqy3MPHaaPSIvZLs-Wpj9_VTwzQcRdrb9pEM-nXFesU3fs5YM4ae8UnYErkxVj2k_f1GvSt5Ycd477PMaNK4l_cXCDRCuN2KWMoYZsKSBTKQ',
+    episodesCount: 8,
+    status: 'Live',
+    views: '840K',
+    revenue: '₹56,100',
+    uploadedDate: '2023-11-04',
+    genre: 'Supernatural, Fantasy',
+  },
+];
+
+export const COMMUNITY_POSTS: CommunityPost[] = [
+  {
+    id: 'post-1',
+    author: {
+      name: 'Aarya Sharma',
+      avatar: DEFAULT_AVATARS.aarya,
+      role: 'Lead Designer',
+    },
+    timestamp: '2 hours ago',
+    title: 'Character Design Breakdown: Kael’s Spirit Katana and Saffron Armor',
+    content:
+      'Here are early visual prototypes of the Spirit Blade! We blended Rajput damascus forging motifs with neo-Tokyo particle conduits. Let us know what you think of the glowing cherry blossom runes.',
+    image:
+      'https://lh3.googleusercontent.com/aida-public/AB6AXuD40aH-TP8mguqoWvOi2kEISetQOcRdElKfCNCcAp1GxeJX4NiRtWjyofWGhm8_RPJrsXIw_Gh6lkYiluJ0Ot8f58xYY9sP5pvRHSGI-cUB6MNS9LCX2b10Ca7ZLTk9Xohw9Z47a24j3bPJsxFjpUTogAhMrZc2qEhRlSlpvWJYxydvIQeku_6LXcV3-tF2yw1vTxf1G_CYcTa7hROvQs_iVsG7ZG0GdhhBxZIryqF5e5J-nR8r3Od_Rg',
+    likes: 1240,
+    commentsCount: 182,
+    isLiked: true,
+    tags: ['BehindTheScenes', 'ShadowOfSakura', 'AnimeConceptArt'],
+  },
+  {
+    id: 'post-2',
+    author: {
+      name: 'Studio Alpha',
+      avatar: DEFAULT_AVATARS.creator,
+      role: 'Animation Studio',
+    },
+    timestamp: 'Yesterday',
+    title: 'Announcing Episode 4 Dub Cast in Hindi, Tamil, and Japanese!',
+    content:
+      'We are ecstatic to confirm the multi-language audio track rollout for Episode 4 "The Silent City". Experience the high-octane battle sequences in immersive 5.1 Dolby audio.',
+    likes: 890,
+    commentsCount: 94,
+    tags: ['Simulcast', 'AniGalnexoOriginals', 'AudioDubs'],
+  },
+];

@@ -1,0 +1,6 @@
+{
+  "name": "AniGalnexo",
+  "description": "Next-generation Anime Streaming platform with cinematic dark glassmorphism, interactive video player, curated discover catalog, and creator analytics.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,100 @@
+@import "tailwindcss";
+
+
+@layer base {
+  :root {
+    --font-outfit: 'Outfit', sans-serif;
+    --font-inter: 'Inter', sans-serif;
+
+    /* Default: Dark theme */
+    --app-bg: #11131c;
+    --app-text: #e1e1ef;
+    --panel-bg: #191b24;
+    --panel-border: rgba(255, 255, 255, 0.08);
+  }
+
+  :root {
+    --accent: #ff7a00;
+    --accent-soft: color-mix(in srgb, var(--accent) 15%, transparent);
+    --accent-border: color-mix(in srgb, var(--accent) 45%, transparent);
+    --accent-glow: color-mix(in srgb, var(--accent) 40%, transparent);
+  }
+
+  :root[data-theme='midnight'] {
+    --app-bg: #080a12;
+    --app-text: #f0f0fa;
+    --panel-bg: #10121d;
+    --panel-border: rgba(255, 255, 255, 0.12);
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont,
+      'Segoe UI', Roboto, sans-serif;
+    background-color: var(--app-bg);
+    color: var(--app-text);
+    transition: background-color 200ms ease, color 200ms ease;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  .font-display,
+  .font-headline {
+    font-family: 'Outfit', 'Inter', sans-serif;
+  }
+}
+
+/* Custom Utilities for Cinematic Glassmorphism & Saffron Glow */
+.glass-card {
+  background: rgba(25, 27, 36, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-panel {
+  background: rgba(25, 27, 36, 0.5);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glow-active {
+  box-shadow: 0 0 15px var(--accent-glow);
+}
+
+.glow-saffron {
+  box-shadow: 0 0 15px var(--accent-glow);
+}
+
+.glow-saffron-hover:hover {
+  box-shadow: 0 0 22px var(--accent-glow);
+}
+
+.text-glow {
+  text-shadow: 0 0 12px var(--accent-glow);
+}
+
+.text-shadow-glow {
+  text-shadow: 0 0 12px var(--accent-glow);
+}
+
+/* Custom Scrollbar for sleek horizontal feeds */
+.no-scrollbar::-webkit-scrollbar,
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar,
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Video Range styling */
+input[type="range"].progress-slider {
+  accent-color: var(--accent);
+}
