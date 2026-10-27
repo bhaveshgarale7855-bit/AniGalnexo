@@ -1,7 +1,6 @@
 import { AnimeShow, PublishedAnimeItem, CreatorStats, CommunityPost } from '../types';
 
-export const BRAND_LOGO_URL =
-  'https://lh3.googleusercontent.com/aida-public/AB6AXuDQk5h4lC7RS3BRaiDPKNzjV9Pr-7oe79e_PS-g260C75jAzMkdKS4UOwm_ZRALHmXpIUneQciBwc_buFKF5cij7o_HPzn2VvMtgM26DqsuKwBiARpF6NdWb15vRmfNuRzj5Oep0YikLCPmpwLT_JOW1cfzW_WGXh8IZiRq6pQjmBmNhtF-8HmFrSj6R9LJs7hq6ooQQgBtyZjOYbi-5pdrXND7EfMEuJBhJw5TdBe7UwHBkXzYIj_57A';
+export const BRAND_LOGO_URL = "/logo.png";
 
 export const DEFAULT_AVATARS = {
   arjun: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDzkJ48L6iIt4nhAP3uw5ek1dxD9KhN2DCrK0sqf7yEnDaY-O5UvGy5bor3LhtI68kZevmZNYWGtMFZ0nL-n2wcBmk_HoVt-0F3a8OB1UIVl8VpzeiH2soOaGhYWLdmhu8s09K98INxVWquJyJXxSI2rdnlxkjufDlEVqYnUGkfbV4Zi-NmFlhWubpuIRgGWX1j__CePuMiOJ1Mjh0qh-u4vmbMXQOaGEkXFzRrhJNo9frslNcuI3S77w',
