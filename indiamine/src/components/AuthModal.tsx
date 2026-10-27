@@ -46,30 +46,70 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }
           setError('Account created. Check your email to confirm the account, then sign in.');
           return;
         }
+
+
+        const { data: adminRecord, error: adminCheckError } = await supabase
+          .from('admin_users')
+          .select('user_id')
+          .eq('user_id', authUser.id)
+          .maybeSingle();
+
+        if (adminCheckError) throw adminCheckError;
+
+        const verifiedRole = adminRecord ? 'admin' : 'viewer';
+
         onLogin({
           id: authUser.id,
           name: name.trim() || email.split('@')[0],
           email: authUser.email || email,
           avatar: DEFAULT_AVATARS.arjun,
-          role: 'viewer',
+          role: verifiedRole,
           isPremium: false,
           joinedDate: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
         });
+
       } else {
-        const { data, error: authError } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
-          password,
-        });
+        const { data, error: authError } =
+          await supabase.auth.signInWithPassword({
+            email: email.trim(),
+            password,
+          });
+
         if (authError) throw authError;
-        if (!data.user) throw new Error('Login failed. Please try again.');
+
+        const authUser = data.user;
+        if (!authUser) {
+          throw new Error('Login failed. Please try again.');
+        }
+
+        let verifiedRole: 'viewer' | 'admin' = 'viewer';
+
+        const { data: adminRecord, error: adminCheckError } =
+          await supabase
+            .from('admin_users')
+            .select('user_id')
+            .eq('user_id', authUser.id)
+            .maybeSingle();
+
+        if (adminCheckError) throw adminCheckError;
+
+        if (adminRecord) {
+          verifiedRole = 'admin';
+        }
+
         onLogin({
-          id: data.user.id,
-          name: (data.user.user_metadata?.full_name as string) || email.split('@')[0],
-          email: data.user.email || email,
+          id: authUser.id,
+          name:
+            (authUser.user_metadata?.full_name as string) ||
+            email.split('@')[0],
+          email: authUser.email || email,
           avatar: DEFAULT_AVATARS.arjun,
-          role: 'viewer',
+          role: verifiedRole,
           isPremium: false,
-          joinedDate: new Date(data.user.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+          joinedDate: new Date(authUser.created_at).toLocaleDateString(
+            'en-US',
+            { month: 'short', year: 'numeric' }
+          ),
         });
       }
       onClose();
@@ -231,9 +271,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }
           {activeRole === 'admin' && 'Authorized administrators only.'}
         </p>
 
-        <button type="button" onClick={handleGoogleLogin} disabled={busy} className="w-full rounded-xl border border-white/15 bg-white/5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10 disabled:opacity-50">
-          Continue with Google
-        </button>
+        {activeRole !== 'admin' && (
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={busy}
+            className="w-full rounded-xl border border-white/15 bg-white/5 py-2.5 text-sm font-semibold text-white transition hover:bg-white/10 disabled:opacity-50"
+          >
+            Continue with Google
+          </button>
+        )}
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-3.5">
@@ -291,15 +338,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }
           </button>
         </form>
 
-        <div className="text-center text-[13px] text-[#e0c0af]/70">
-          {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
-          <button
-            onClick={() => { setIsSignUp(!isSignUp); setError(''); }}
-            className="text-[var(--accent)] font-bold hover:underline"
-          >
-            {isSignUp ? 'Sign In' : 'Sign Up'}
-          </button>
-        </div>
+        {activeRole !== 'admin' && (
+          <div className="text-center text-[13px] text-[#e0c0af]/70">
+            {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+            <button
+              onClick={() => {
+                setIsSignUp(!isSignUp);
+                setError('');
+              }}
+              className="text-[var(--accent)] font-bold hover:underline"
+            >
+              {isSignUp ? 'Sign In' : 'Sign Up'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

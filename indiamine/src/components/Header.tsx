@@ -255,7 +255,7 @@ export const Header: React.FC<HeaderProps> = ({
                 </div>
 
                 <div className="py-1.5 space-y-1">
-                  <button
+                  {/* <button
                     onClick={() => {
                       onNavigateToStudio();
                       setIsProfileMenuOpen(false);
@@ -269,7 +269,7 @@ export const Header: React.FC<HeaderProps> = ({
                     <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 rounded bg-white/10">
                       Pro
                     </span>
-                  </button>
+                  </button> */}
 
                   <button
                     onClick={() => {

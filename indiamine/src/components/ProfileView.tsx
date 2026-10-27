@@ -67,79 +67,85 @@ export const ProfileView: React.FC<ProfileViewProps> = ({
 
       {/* Settings & Options Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {/* Creator Studio Card */}
-        <div
-          onClick={onNavigateToStudio}
-          className="glass-card p-6 rounded-3xl border border-white/10 hover:border-[var(--accent)]/50 transition-all cursor-pointer space-y-3 group"
-        >
-          <div className="w-12 h-12 rounded-2xl bg-[var(--accent)]/20 text-[var(--accent)] flex items-center justify-center group-hover:scale-110 transition-transform">
-            <Sparkles className="w-6 h-6" />
-          </div>
-          <h3 className="font-headline font-bold text-lg text-white group-hover:text-[var(--accent)] transition-colors">
-            Creator Studio Dashboard
-          </h3>
-          <p className="text-[13px] text-[#e0c0af]/80">
-            Publish original anime series, view streaming metrics, and manage earnings payouts.
-          </p>
-          <div className="pt-2 flex items-center gap-1 text-[13px] font-bold text-[var(--accent)]">
-            <span>Open Studio</span>
-            <ChevronRight className="w-4 h-4" />
-          </div>
-        </div>
 
-        {/* Downloads */}
-        <div
-          onClick={() => onToast('You have 3 episodes stored offline.')}
-          className="glass-card p-6 rounded-3xl border border-white/10 hover:border-white/20 transition-all cursor-pointer space-y-3"
-        >
-          <div className="w-12 h-12 rounded-2xl bg-white/5 text-[#00f4fe] flex items-center justify-center">
-            <Download className="w-6 h-6" />
-          </div>
-          <h3 className="font-headline font-bold text-lg text-white">Offline Downloads</h3>
-          <p className="text-[13px] text-[#e0c0af]/80">
-            Manage downloaded 1080p episodes for offline viewing without consuming mobile data.
-          </p>
-        </div>
+        {/* Creator Studio Card - only for creators and admins */}
+        {['admin', 'creator'].includes(currentUser.role.toLowerCase()) && (
+          <div
+            onClick={onNavigateToStudio}
+            className="glass-card p-6 rounded-3xl border border-white/10 hover:border-[var(--accent)]/50 transition-all cursor-pointer space-y-3 group"
+          >
+            <div className="w-12 h-12 rounded-2xl bg-[var(--accent)]/20 text-[var(--accent)] flex items-center justify-center group-hover:scale-110 transition-transform">
+              <Sparkles className="w-6 h-6" />
+            </div>
 
-        {/* Audio & Dubbing Preferences */}
-        <div
-          onClick={() => onToast('Default audio set to Hindi (Dub) with English CC.')}
-          className="glass-card p-6 rounded-3xl border border-white/10 hover:border-white/20 transition-all cursor-pointer space-y-3"
-        >
-          <div className="w-12 h-12 rounded-2xl bg-white/5 text-[var(--accent)] flex items-center justify-center">
-            <Languages className="w-6 h-6" />
-          </div>
-          <h3 className="font-headline font-bold text-lg text-white">Playback Language Defaults</h3>
-          <p className="text-[13px] text-[#e0c0af]/80">
-            Preferred Default: Hindi (Dub) with English Subtitles.
-          </p>
-        </div>
+            <h3 className="font-headline font-bold text-lg text-white group-hover:text-[var(--accent)] transition-colors">
+              Creator Studio Dashboard
+            </h3>
 
-        {/* Security & Account */}
-        <div
-          onClick={() => onToast('Security settings verified.')}
-          className="glass-card p-6 rounded-3xl border border-white/10 hover:border-white/20 transition-all cursor-pointer space-y-3"
-        >
-          <div className="w-12 h-12 rounded-2xl bg-white/5 text-emerald-400 flex items-center justify-center">
-            <Shield className="w-6 h-6" />
+            <p className="text-[13px] text-[#e0c0af]/80">
+              Publish original anime series, view streaming metrics, and manage earnings payouts.
+            </p>
+
+            <div className="pt-2 flex items-center gap-1 text-[13px] font-bold text-[var(--accent)]">
+              <span>Open Studio</span>
+              <ChevronRight className="w-4 h-4" />
+            </div>
           </div>
-          <h3 className="font-headline font-bold text-lg text-white">Security & Privacy</h3>
-          <p className="text-[13px] text-[#e0c0af]/80">
-            Manage active streaming devices, connected TV credentials, and profile locks.
-          </p>
+        )}
+
+      {/* Downloads */}
+      <div
+        onClick={() => onToast('You have 3 episodes stored offline.')}
+        className="glass-card p-6 rounded-3xl border border-white/10 hover:border-white/20 transition-all cursor-pointer space-y-3"
+      >
+        <div className="w-12 h-12 rounded-2xl bg-white/5 text-[#00f4fe] flex items-center justify-center">
+          <Download className="w-6 h-6" />
         </div>
+        <h3 className="font-headline font-bold text-lg text-white">Offline Downloads</h3>
+        <p className="text-[13px] text-[#e0c0af]/80">
+          Manage downloaded 1080p episodes for offline viewing without consuming mobile data.
+        </p>
       </div>
 
-      {/* Logout */}
-      <div className="pt-4 flex justify-end">
-        <button
-          onClick={onLogout}
-          className="px-6 py-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300 font-bold text-[13px] flex items-center gap-2 transition-colors"
-        >
-          <LogOut className="w-4 h-4" />
-          <span>Sign Out of AniGalnexo</span>
-        </button>
+      {/* Audio & Dubbing Preferences */}
+      <div
+        onClick={() => onToast('Default audio set to Hindi (Dub) with English CC.')}
+        className="glass-card p-6 rounded-3xl border border-white/10 hover:border-white/20 transition-all cursor-pointer space-y-3"
+      >
+        <div className="w-12 h-12 rounded-2xl bg-white/5 text-[var(--accent)] flex items-center justify-center">
+          <Languages className="w-6 h-6" />
+        </div>
+        <h3 className="font-headline font-bold text-lg text-white">Playback Language Defaults</h3>
+        <p className="text-[13px] text-[#e0c0af]/80">
+          Preferred Default: Hindi (Dub) with English Subtitles.
+        </p>
+      </div>
+
+      {/* Security & Account */}
+      <div
+        onClick={() => onToast('Security settings verified.')}
+        className="glass-card p-6 rounded-3xl border border-white/10 hover:border-white/20 transition-all cursor-pointer space-y-3"
+      >
+        <div className="w-12 h-12 rounded-2xl bg-white/5 text-emerald-400 flex items-center justify-center">
+          <Shield className="w-6 h-6" />
+        </div>
+        <h3 className="font-headline font-bold text-lg text-white">Security & Privacy</h3>
+        <p className="text-[13px] text-[#e0c0af]/80">
+          Manage active streaming devices, connected TV credentials, and profile locks.
+        </p>
       </div>
     </div>
+
+      {/* Logout */ }
+  <div className="pt-4 flex justify-end">
+    <button
+      onClick={onLogout}
+      className="px-6 py-2.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300 font-bold text-[13px] flex items-center gap-2 transition-colors"
+    >
+      <LogOut className="w-4 h-4" />
+      <span>Sign Out of AniGalnexo</span>
+    </button>
+  </div>
+    </div >
   );
 };

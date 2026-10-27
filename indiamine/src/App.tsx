@@ -59,36 +59,90 @@ export default function App() {
       root.dataset.theme = prefs.theme === 'darker' ? 'midnight' : 'dark';
     } catch { /* use CSS defaults when preferences are unavailable */ }
 
+
     if (!supabase) return;
+
     let alive = true;
-    supabase.auth.getSession().then(({ data }) => {
-      const authUser = data.session?.user;
-      if (!alive || !authUser) return;
-      setCurrentUser({
-        id: authUser.id,
-        name: (authUser.user_metadata?.full_name as string) || authUser.email?.split('@')[0] || 'AniGalnexo User',
-        email: authUser.email || '',
-        avatar: (authUser.user_metadata?.avatar_url as string) || DEFAULT_AVATARS.arjun,
-        role: 'viewer',
-        isPremium: false,
-        joinedDate: new Date(authUser.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-      });
-    });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+
+    const applyAuthUser = async (authUser: import('@supabase/supabase-js').User) => {
+      const { data: adminRecord, error: adminError } = await supabase
+        .from('admin_users')
+        .select('user_id')
+        .eq('user_id', authUser.id)
+        .maybeSingle();
+
       if (!alive) return;
-      if (!session?.user) { setCurrentUser(null); return; }
-      const authUser = session.user;
+
+      if (adminError) {
+        console.error('Admin verification failed:', adminError);
+      }
+
+      const isAdmin = !adminError && !!adminRecord;
+
       setCurrentUser({
         id: authUser.id,
-        name: (authUser.user_metadata?.full_name as string) || authUser.email?.split('@')[0] || 'AniGalnexo User',
+        name:
+          (authUser.user_metadata?.full_name as string) ||
+          authUser.email?.split('@')[0] ||
+          'AniGalnexo User',
         email: authUser.email || '',
-        avatar: (authUser.user_metadata?.avatar_url as string) || DEFAULT_AVATARS.arjun,
-        role: 'viewer',
+        avatar:
+          (authUser.user_metadata?.avatar_url as string) ||
+          DEFAULT_AVATARS.arjun,
+        role: isAdmin ? 'admin' : 'viewer',
         isPremium: false,
-        joinedDate: new Date(authUser.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+        joinedDate: new Date(authUser.created_at).toLocaleDateString(
+          'en-US',
+          { month: 'short', year: 'numeric' }
+        ),
       });
+
+      if (isAdmin) {
+        setCurrentView('admin');
+      }
+    };
+
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (error) {
+        console.error('Session restore failed:', error);
+      }
+
+      if (alive && data.session?.user) {
+        void applyAuthUser(data.session.user);
+      }
     });
-    return () => { alive = false; listener.subscription.unsubscribe(); };
+
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (!alive) return;
+
+        if (!session?.user) {
+          setCurrentUser(null);
+          setCurrentView('home');
+          return;
+        }
+
+        if (
+          event === 'SIGNED_IN' ||
+          event === 'INITIAL_SESSION' ||
+          event === 'USER_UPDATED'
+        ) {
+          const authUser = session.user;
+
+          // Run the database query after the auth callback returns.
+          setTimeout(() => {
+            if (alive) {
+              void applyAuthUser(authUser);
+            }
+          }, 0);
+        }
+      }
+    );
+
+    return () => {
+      alive = false;
+      listener.subscription.unsubscribe();
+    };
   }, []);
 
   // Modals & Toast State
@@ -153,7 +207,9 @@ export default function App() {
     setIsPremiumOpen(false);
     showToast('Premium checkout is not connected yet. No payment or subscription was activated.');
   };
-
+  if (currentView === 'admin' && currentUser?.role === 'admin') {
+    return <AdminDashboardView />;
+  }
   return (
     // <div className="min-h-screen bg-[#11131c] text-[#e1e1ef] font-sans selection:bg-[var(--accent)] selection:text-white">
     <div className="min-h-screen bg-[var(--app-bg)] text-[var(--app-text)] font-sans selection:bg-[var(--accent)] selection:text-white">
@@ -306,9 +362,15 @@ export default function App() {
         onClose={() => setIsAuthOpen(false)}
         onLogin={(user) => {
           setCurrentUser(user);
-          showToast(`Welcome back, ${user.name}!`);
-        }}
-      />
+
+          if (user.role === 'admin') {
+            setCurrentView('admin');
+            showToast('Welcome back, Admin!');
+          } else {
+            setCurrentView('home');
+            showToast(`Welcome back, ${user.name}!`);
+          }
+        }} />
 
       <PremiumModal
         isOpen={isPremiumOpen}

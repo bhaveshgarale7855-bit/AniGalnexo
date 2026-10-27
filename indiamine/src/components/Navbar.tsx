@@ -158,7 +158,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span className="font-medium">Settings</span>
               </button>
 
-              <div className="pt-4 border-t border-white/10 mt-3">
+              {/* <div className="pt-4 border-t border-white/10 mt-3">
                 <button
                   onClick={() => onNavigate('creator-studio')}
                   className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl bg-white/5 hover:bg-[var(--accent)]/15 border border-white/10 hover:border-[var(--accent)]/40 text-[#e1e1ef] text-[13px] font-medium transition-all group"
@@ -171,7 +171,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     Pro
                   </span>
                 </button>
-              </div>
+              </div> */}
             </>
           ) : (
             /* Creator Studio navigation */
