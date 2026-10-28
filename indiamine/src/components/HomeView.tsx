@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import {
   Play,
   Plus,
@@ -13,6 +12,8 @@ import {
 } from 'lucide-react';
 import { AnimeShow, Episode } from '../types';
 import { ANIME_SHOWS } from '../data/animeData';
+import React, { useEffect, useState } from 'react';
+import API_BASE_URL from '../lib/api';
 
 interface HomeViewProps {
   onSelectShow: (show: AnimeShow) => void;
@@ -33,6 +34,42 @@ export const HomeView: React.FC<HomeViewProps> = ({
 }) => {
   // Hero Show is the flagship original "Shadow of Sakura"
   const heroShow = ANIME_SHOWS[0];
+
+  interface UploadedVideo {
+    id: string;
+    title: string;
+    genre?: string;
+    synopsis?: string;
+    videoFile: string;
+    status: 'Pending' | 'Live' | 'Rejected';
+    uploadedDate?: string;
+    episodesCount?: number;
+  }
+
+  const [uploadedVideos, setUploadedVideos] = useState<UploadedVideo[]>([]);
+
+  useEffect(() => {
+    const loadUploadedVideos = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/videos`);
+
+        if (!response.ok) {
+          throw new Error('Failed to load uploaded videos');
+        }
+
+        const data: UploadedVideo[] = await response.json();
+
+        setUploadedVideos(
+          data.filter((video) => video.status === 'Live')
+        );
+      } catch (error) {
+        console.error('Could not load uploaded videos:', error);
+      }
+    };
+
+    loadUploadedVideos();
+  }, []);
+
   const isInMyList = myList.includes(heroShow.id);
   const [heroEpIndex] = useState(2); // Ep 3 "Crimson Petals Fall"
 
@@ -132,11 +169,10 @@ export const HomeView: React.FC<HomeViewProps> = ({
 
             <button
               onClick={() => onToggleMyList(heroShow.id)}
-              className={`px-5 py-3.5 rounded-xl font-bold text-[14px] flex items-center gap-2 transition-all duration-200 border ${
-                isInMyList
-                  ? 'bg-white/20 border-white/40 text-white'
-                  : 'bg-white/10 hover:bg-white/15 border-white/15 text-white'
-              }`}
+              className={`px-5 py-3.5 rounded-xl font-bold text-[14px] flex items-center gap-2 transition-all duration-200 border ${isInMyList
+                ? 'bg-white/20 border-white/40 text-white'
+                : 'bg-white/10 hover:bg-white/15 border-white/15 text-white'
+                }`}
             >
               {isInMyList ? (
                 <>
@@ -214,6 +250,49 @@ export const HomeView: React.FC<HomeViewProps> = ({
           ))}
         </div>
       </section>
+
+
+      {/* Community Uploaded Anime */}
+      {uploadedVideos.length > 0 && (
+        <section className="space-y-4">
+          <div className="flex items-center gap-2.5">
+            <Play className="w-5 h-5 text-[var(--accent)]" />
+            <h2 className="font-headline text-xl sm:text-2xl font-bold text-white">
+              Community Uploads
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {uploadedVideos.map((video) => (
+              <button
+                key={video.id}
+                type="button"
+                onClick={() =>
+                  window.open(
+                    `${API_BASE_URL}/api/videos/${video.id}/stream`,
+                    '_blank'
+                  )
+                }
+                className="text-left group bg-[#191b24]/70 border border-white/10 rounded-2xl overflow-hidden hover:border-[var(--accent)]/60 transition-all"
+              >
+                <div className="aspect-[2/3] bg-gradient-to-br from-[#241c2c] to-[#11131c] flex flex-col items-center justify-center p-4">
+                  <Play className="w-12 h-12 text-[var(--accent)] mb-3" />
+                  <span className="text-xs text-white/60">COMMUNITY ANIME</span>
+                </div>
+
+                <div className="p-3">
+                  <h3 className="font-bold text-sm text-white truncate">
+                    {video.title}
+                  </h3>
+                  <p className="text-xs text-white/60 mt-1 truncate">
+                    {video.genre || 'Anime'}
+                  </p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Trending Indian Anime Originals */}
       <section className="space-y-4">
@@ -317,7 +396,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               <div className="relative flex items-center">
                 {/* Big Number */}
                 <span className="font-headline font-black text-6xl text-[#191b24] select-none stroke-num -ml-1 text-stroke tracking-tighter"
-                      style={{ WebkitTextStroke: '2px var(--accent-glow)', color: '#11131c' }}>
+                  style={{ WebkitTextStroke: '2px var(--accent-glow)', color: '#11131c' }}>
                   {idx + 1}
                 </span>
                 {/* Poster */}

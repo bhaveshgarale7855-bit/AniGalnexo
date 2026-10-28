@@ -82,19 +82,53 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }
           throw new Error('Login failed. Please try again.');
         }
 
-        let verifiedRole: 'viewer' | 'admin' = 'viewer';
 
-        const { data: adminRecord, error: adminCheckError } =
-          await supabase
-            .from('admin_users')
-            .select('user_id')
-            .eq('user_id', authUser.id)
-            .maybeSingle();
+        const { data: adminRecord, error: adminCheckError } = await supabase
+          .from('admin_users')
+          .select('user_id')
+          .eq('user_id', authUser.id)
+          .maybeSingle();
 
         if (adminCheckError) throw adminCheckError;
 
+        let verifiedRole: 'viewer' | 'creator' | 'admin' = 'viewer';
+
+        // Admin role verification
         if (adminRecord) {
           verifiedRole = 'admin';
+        } else {
+          // Approved creator verification
+          const { data: creatorRecord, error: creatorCheckError } = await supabase
+            .from('creator_profiles')
+            .select('user_id, status')
+            .eq('user_id', authUser.id)
+            .maybeSingle();
+
+          if (creatorCheckError) throw creatorCheckError;
+
+          if (creatorRecord?.status === 'approved') {
+            verifiedRole = 'creator';
+          }
+        }
+
+        // Ensure the selected login tab matches the account's actual role
+        if (activeRole === 'admin' && verifiedRole !== 'admin') {
+          await supabase.auth.signOut();
+          throw new Error('This account is not authorized as an administrator.');
+        }
+
+        if (activeRole === 'creator' && verifiedRole !== 'creator') {
+          await supabase.auth.signOut();
+          throw new Error(
+            'Your Creator account is not approved yet. Please use an approved Creator account.'
+          );
+        }
+
+        if (activeRole === 'viewer' && verifiedRole !== 'viewer') {
+          await supabase.auth.signOut();
+          throw new Error(
+            `This is a ${verifiedRole} account. Please select the ${verifiedRole === 'admin' ? 'Admin' : 'Creator'} tab.`
+          );
         }
 
         onLogin({
@@ -155,42 +189,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }
     setError(resetError ? resetError.message : 'Password reset email requested. Check your inbox.');
   };
 
-  // const handleDemoLogin = (role: 'viewer' | 'creator' | 'admin') => {
-  //   let demoUser: UserType;
-  //   if (role === 'creator') {
-  //     demoUser = {
-  //       id: 'creator-aarya',
-  //       name: 'Aarya Sharma',
-  //       email: 'aarya.sharma@studios.AniGalnexo.in',
-  //       avatar: DEFAULT_AVATARS.aarya,
-  //       role: 'creator',
-  //       isPremium: true,
-  //       joinedDate: 'Nov 2023',
-  //     };
-  //   } else if (role === 'admin') {
-  //     demoUser = {
-  //       id: 'admin-1',
-  //       name: 'AniGalnexo Producer',
-  //       email: 'ops@AniGalnexo.in',
-  //       avatar: DEFAULT_AVATARS.player,
-  //       role: 'admin',
-  //       isPremium: true,
-  //       joinedDate: 'Aug 2023',
-  //     };
-  //   } else {
-  //     demoUser = {
-  //       id: 'viewer-arjun',
-  //       name: 'Arjun M.',
-  //       email: 'arjun@AniGalnexo.in',
-  //       avatar: DEFAULT_AVATARS.arjun,
-  //       role: 'viewer',
-  //       isPremium: true,
-  //       joinedDate: 'Jan 2024',
-  //     };
-  //   }
-  //   onLogin(demoUser);
-  //   onClose();
-  // };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
@@ -215,32 +213,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }
           </p>
         </div>
 
-        {/* 1-Click Quick Demo Presets
-        <div className="space-y-2 p-3 rounded-2xl bg-white/5 border border-white/10 text-center">
-          <span className="text-[10px] font-extrabold uppercase tracking-wider text-[var(--accent)] block">
-            ⚡ Quick 1-Click Demo Profiles
-          </span>
-          <div className="grid grid-cols-3 gap-2 pt-1">
-            <button
-              onClick={() => handleDemoLogin('viewer')}
-              className="py-1.5 px-2 rounded-xl bg-white/10 hover:bg-[var(--accent)]/30 hover:border-[var(--accent)]/50 border border-white/10 text-white text-[11px] font-bold transition-all"
-            >
-              Viewer (Arjun)
-            </button>
-            <button
-              onClick={() => handleDemoLogin('creator')}
-              className="py-1.5 px-2 rounded-xl bg-white/10 hover:bg-[var(--accent)]/30 hover:border-[var(--accent)]/50 border border-white/10 text-[var(--accent)] text-[11px] font-bold transition-all"
-            >
-              Creator (Aarya)
-            </button>
-            <button
-              onClick={() => handleDemoLogin('admin')}
-              className="py-1.5 px-2 rounded-xl bg-white/10 hover:bg-[var(--accent)]/30 hover:border-[var(--accent)]/50 border border-white/10 text-[#00f4fe] text-[11px] font-bold transition-all"
-            >
-              Producer
-            </button>
-          </div>
-        </div> */}
         {/* Login Role Selector */}
         <div className="grid grid-cols-3 gap-2 p-1 rounded-xl bg-[#11131c] border border-white/10">
           {([

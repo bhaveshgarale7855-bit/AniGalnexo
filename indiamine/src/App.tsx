@@ -77,7 +77,26 @@ export default function App() {
         console.error('Admin verification failed:', adminError);
       }
 
+
       const isAdmin = !adminError && !!adminRecord;
+
+      let verifiedRole: 'viewer' | 'creator' | 'admin' = 'viewer';
+
+      if (isAdmin) {
+        verifiedRole = 'admin';
+      } else {
+        const { data: creatorRecord, error: creatorError } = await supabase
+          .from('creator_profiles')
+          .select('user_id, status')
+          .eq('user_id', authUser.id)
+          .maybeSingle();
+
+        if (creatorError) {
+          console.error('Creator verification failed:', creatorError);
+        } else if (creatorRecord?.status === 'approved') {
+          verifiedRole = 'creator';
+        }
+      }
 
       setCurrentUser({
         id: authUser.id,
@@ -89,7 +108,7 @@ export default function App() {
         avatar:
           (authUser.user_metadata?.avatar_url as string) ||
           DEFAULT_AVATARS.arjun,
-        role: isAdmin ? 'admin' : 'viewer',
+        role: verifiedRole,
         isPremium: false,
         joinedDate: new Date(authUser.created_at).toLocaleDateString(
           'en-US',
@@ -97,8 +116,10 @@ export default function App() {
         ),
       });
 
-      if (isAdmin) {
+      if (verifiedRole === 'admin') {
         setCurrentView('admin');
+      } else if (verifiedRole === 'creator') {
+        setCurrentView('creator-studio');
       }
     };
 
@@ -360,17 +381,23 @@ export default function App() {
       <AuthModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
+
         onLogin={(user) => {
           setCurrentUser(user);
 
           if (user.role === 'admin') {
             setCurrentView('admin');
             showToast('Welcome back, Admin!');
+          } else if (user.role === 'creator') {
+            setCurrentView('creator-studio');
+            showToast(`Welcome back, ${user.name}!`);
           } else {
             setCurrentView('home');
             showToast(`Welcome back, ${user.name}!`);
           }
-        }} />
+        }}>
+          
+        </AuthModal>
 
       <PremiumModal
         isOpen={isPremiumOpen}

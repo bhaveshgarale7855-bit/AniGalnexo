@@ -120,3 +120,17 @@ export interface CommunityPost {
   isLiked?: boolean;
   tags: string[];
 }
+
+
+export interface UploadedVideo {
+  id: string;
+  title: string;
+  description?: string;
+  thumbnail?: string;
+  videoUrl?: string;
+  status: 'Pending' | 'Live' | 'Rejected';
+  uploadedAt?: string;
+  genre?: string;
+  duration?: string;
+  creatorName?: string;
+}

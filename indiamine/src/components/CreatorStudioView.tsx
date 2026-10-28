@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Eye,
   Users,
@@ -8,6 +8,7 @@ import {
   Plus,
   Search,
   MoreVertical,
+  Trash2,
   ShieldCheck,
   CheckCircle2,
   Clock,
@@ -23,6 +24,7 @@ import {
   PUBLISHED_ANIME_LIST,
   DEFAULT_AVATARS,
 } from '../data/animeData';
+import API_BASE_URL from '../lib/api';
 
 interface CreatorStudioViewProps {
   onToast: (msg: string) => void;
@@ -42,49 +44,185 @@ export const CreatorStudioView: React.FC<CreatorStudioViewProps> = ({ onToast })
   const [newSynopsis, setNewSynopsis] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedThumbnail, setSelectedThumbnail] = useState<File | null>(null);
+  const thumbnailInputRef = useRef<HTMLInputElement>(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState('');
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadSavedVideos = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/videos`);
+
+        if (!response.ok) {
+          throw new Error('Could not load saved videos.');
+        }
+
+        const videos = await response.json();
+
+        if (cancelled || !Array.isArray(videos)) return;
+
+        const savedItems: PublishedAnimeItem[] = videos.map((video: any) => ({
+          id: video.id,
+          title: video.title,
+          thumbnail: '',
+          episodesCount: Number(video.episodesCount) || 1,
+          status: video.status === 'Live' ? 'Live' : 'Pending',
+          views: '--',
+          revenue: '--',
+          uploadedDate: video.uploadedDate
+            ? video.uploadedDate.slice(0, 10)
+            : '',
+          genre: video.genre || 'Uncategorized',
+        }));
+
+        setPublishedList((current) => {
+          const savedIds = new Set(savedItems.map((item) => item.id));
+          const demoItems = current.filter((item) => !savedIds.has(item.id));
+          return [...savedItems, ...demoItems];
+        });
+      } catch (error) {
+        if (!cancelled) {
+          console.error('Loading saved anime failed:', error);
+          onToast('Could not load saved videos. Check that the local server is running.');
+        }
+      }
+    };
+
+    void loadSavedVideos();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [onToast]);
+
 
   const filteredList = publishedList.filter((item) =>
     item.title.toLowerCase().includes(searchTable.toLowerCase())
   );
 
-  const handleUploadSubmit = (e: React.FormEvent) => {
+
+  const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!newTitle.trim()) {
       onToast('Please enter an anime title');
       return;
     }
 
-    setIsUploading(true);
-    let progress = 0;
-    const interval = setInterval(() => {
-      progress += 25;
-      setUploadProgress(progress);
-      if (progress >= 100) {
-        clearInterval(interval);
-        setTimeout(() => {
-          const newItem: PublishedAnimeItem = {
-            id: `anime-${Date.now()}`,
-            title: newTitle,
-            thumbnail:
-              'https://lh3.googleusercontent.com/aida-public/AB6AXuDUEwNfR46cIWp82kkSd7Wy-MUoAV-e-vpnN4XpbBDUaP-c4hezE9bw8SPz9FESgzTdoLQXX0eFtaL6HD3TNR-gzPyvrkW06uOLirtOYSsLXwcjJMSfUCb8LqymWc1mmMOZDdGWOY9VYUpAqk0mBVdcC_HbjNNy6VCi3NOpH0gGYBsT_qX_TJi7aMLiMYQ9wybB_TQylLhbRnwEjlQ6-ol5ze-m3dnZo5GwfjyA8XItsE6AaVE5qynKkg',
-            episodesCount: Number(newEpisodesCount) || 1,
-            status: 'Pending',
-            views: '--',
-            revenue: '--',
-            uploadedDate: new Date().toISOString().split('T')[0],
-            genre: newGenre,
-          };
+    if (!selectedFile) {
+      onToast('Please select a video file first.');
+      return;
+    }
 
-          setPublishedList([newItem, ...publishedList]);
-          setIsUploading(false);
-          setUploadProgress(0);
-          setIsUploadModalOpen(false);
-          setNewTitle('');
-          setNewSynopsis('');
-          onToast(`"${newTitle}" submitted successfully for AniGalnexo review!`);
-        }, 500);
+    if (selectedFile.size === 0) {
+      onToast('The selected video is empty.');
+      return;
+    }
+
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    try {
+      const initResponse = await fetch(`${API_BASE_URL}/api/uploads/init`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: selectedFile.name,
+          size: selectedFile.size,
+          title: newTitle.trim(),
+          genre: newGenre,
+          episodesCount: Number(newEpisodesCount) || 1,
+          synopsis: newSynopsis,
+        }),
+      });
+
+      if (!initResponse.ok) {
+        const error = await initResponse.json();
+        throw new Error(error.error || 'Could not start upload.');
       }
-    }, 300);
+
+      const { uploadId, chunkSize } = await initResponse.json();
+      let uploaded = 0;
+
+      while (uploaded < selectedFile.size) {
+        const chunk = selectedFile.slice(
+          uploaded,
+          Math.min(uploaded + chunkSize, selectedFile.size)
+        );
+
+        const chunkResponse = await fetch(
+          `http://127.0.0.1:4000/api/uploads/${uploadId}/chunk`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/octet-stream',
+              'X-Chunk-Start': String(uploaded),
+            },
+            body: chunk,
+          }
+        );
+
+        if (!chunkResponse.ok) {
+          const error = await chunkResponse.json();
+          throw new Error(error.error || 'Video chunk upload failed.');
+        }
+
+        const result = await chunkResponse.json();
+        uploaded = result.received;
+
+        setUploadProgress(
+          Math.floor((uploaded / selectedFile.size) * 100)
+        );
+      }
+
+      const completeResponse = await fetch(
+        `http://127.0.0.1:4000/api/uploads/${uploadId}/complete`,
+        { method: 'POST' }
+      );
+
+      if (!completeResponse.ok) {
+        const error = await completeResponse.json();
+        throw new Error(error.error || 'Could not finish the upload.');
+      }
+
+      const { video } = await completeResponse.json();
+
+      const newItem: PublishedAnimeItem = {
+        id: video.id,
+        title: video.title,
+        thumbnail: '',
+        episodesCount: video.episodesCount,
+        status: 'Pending',
+        views: '--',
+        revenue: '--',
+        uploadedDate: video.uploadedDate.slice(0, 10),
+        genre: video.genre,
+      };
+
+      setPublishedList((current) => [
+        newItem,
+        ...current.filter((item) => item.id !== newItem.id),
+      ]);
+
+      setNewTitle('');
+      setNewSynopsis('');
+      setSelectedFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+
+      setIsUploadModalOpen(false);
+      onToast(`"${video.title}" saved to your D drive!`);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Upload failed.';
+      onToast(message);
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -221,11 +359,17 @@ export const CreatorStudioView: React.FC<CreatorStudioViewProps> = ({ onToast })
                 <tr key={item.id} className="hover:bg-white/5 transition-colors group">
                   <td className="py-4">
                     <div className="flex items-center gap-3">
-                      <img
-                        src={item.thumbnail}
-                        alt={item.title}
-                        className="w-12 h-16 rounded-xl object-cover flex-shrink-0 shadow-md border border-white/10"
-                      />
+                      {item.thumbnail ? (
+                        <img
+                          src={item.thumbnail}
+                          alt={item.title}
+                          className="w-12 h-16 rounded-xl object-cover flex-shrink-0 shadow-md border border-white/10"
+                        />
+                      ) : (
+                        <div className="w-12 h-16 rounded-xl flex-shrink-0 border border-white/10 bg-white/5 flex items-center justify-center">
+                          <FileVideo className="w-6 h-6 text-[#e0c0af]/60" />
+                        </div>
+                      )}
                       <div>
                         <h4 className="font-bold text-[14px] text-white group-hover:text-[var(--accent)] transition-colors">
                           {item.title}
@@ -257,14 +401,75 @@ export const CreatorStudioView: React.FC<CreatorStudioViewProps> = ({ onToast })
                   <td className="py-4 font-mono font-bold text-[var(--accent)]">{item.revenue}</td>
                   <td className="py-4 text-[#e0c0af]/70">{item.uploadedDate}</td>
 
+
                   <td className="py-4 text-right">
-                    <button
-                      onClick={() => onToast(`Managing "${item.title}" settings...`)}
-                      className="p-2 rounded-lg bg-white/5 hover:bg-white/15 text-[#e0c0af] hover:text-white transition-colors"
-                      title="Manage Anime"
-                    >
-                      <MoreVertical className="w-4 h-4" />
-                    </button>
+                    <div className="relative inline-block">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setOpenMenuId((current) =>
+                            current === item.id ? null : item.id
+                          )
+                        }
+                        className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                        title="More options"
+                      >
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
+
+                      {openMenuId === item.id && (
+                        <div className="absolute right-0 top-full mt-2 w-36 rounded-xl border border-white/10 bg-[#18181b] shadow-xl z-50 p-1">
+                          <button
+                            type="button"
+                            onClick={async () => {
+                              setOpenMenuId(null);
+
+                              const confirmed = window.confirm(
+                                `Are you sure you want to delete "${item.title}"?`
+                              );
+
+                              if (!confirmed) return;
+
+                              try {
+                                const response = await fetch(
+                                  `http://127.0.0.1:4000/api/videos/${encodeURIComponent(item.id)}`,
+                                  { method: 'DELETE' }
+                                );
+
+                                if (response.status === 404) {
+                                  // This is a demo item, not a saved backend video.
+                                  setPublishedList((current) =>
+                                    current.filter((anime) => anime.id !== item.id)
+                                  );
+                                  onToast(`Demo item "${item.title}" removed.`);
+                                  return;
+                                }
+
+                                if (!response.ok) {
+                                  throw new Error('Could not delete the saved video.');
+                                }
+
+                                setPublishedList((current) =>
+                                  current.filter((anime) => anime.id !== item.id)
+                                );
+
+                                onToast(`"${item.title}" and its saved video were deleted.`);
+                              } catch (error) {
+                                onToast(
+                                  error instanceof Error
+                                    ? error.message
+                                    : 'Delete failed. Check the local server.'
+                                );
+                              }
+                            }}
+                            className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -332,13 +537,129 @@ export const CreatorStudioView: React.FC<CreatorStudioViewProps> = ({ onToast })
                 <p className="text-[12px] text-[#e0c0af]/60 mt-1">
                   Supports 4K UHD, 1080p, 60FPS • Up to 5GB per episode
                 </p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="video/mp4,video/webm,video/quicktime,video/x-matroska,.mp4,.webm,.mov,.mkv"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+
+                    const allowedExtensions = /\.(mp4|webm|mov|mkv)$/i;
+
+                    if (!allowedExtensions.test(file.name)) {
+                      onToast('Please select an MP4, WebM, MOV, or MKV video.');
+                      e.target.value = '';
+                      return;
+                    }
+
+                    setSelectedFile(file);
+                  }}
+                />
                 <button
                   type="button"
+                  onClick={() => fileInputRef.current?.click()}
                   className="mt-4 px-4 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-[12px] font-bold"
                 >
                   Browse Files
                 </button>
+
+                {selectedFile && (
+                  <p className="mt-3 text-sm text-emerald-300 break-all">
+                    Selected: {selectedFile.name}
+                  </p>
+                )}
               </div>
+
+
+              {/* Anime Thumbnail Picker */}
+              <div className="rounded-2xl border border-white/15 bg-white/5 p-5 space-y-3">
+                <div>
+                  <label className="text-sm font-bold text-white">
+                    Anime Thumbnail / Poster
+                  </label>
+                  <p className="text-xs text-[#e0c0af]/60 mt-1">
+                    Choose a JPG, PNG, or WebP image for your anime cover.
+                  </p>
+                </div>
+
+                <input
+                  ref={thumbnailInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+
+                    if (file.size > 10 * 1024 * 1024) {
+                      onToast('Thumbnail must be 10 MB or smaller.');
+                      e.target.value = '';
+                      return;
+                    }
+
+                    setSelectedThumbnail(file);
+
+                    setThumbnailPreview((oldPreview) => {
+                      if (oldPreview) URL.revokeObjectURL(oldPreview);
+                      return URL.createObjectURL(file);
+                    });
+                  }}
+                />
+
+                <div className="flex flex-wrap items-center gap-4">
+                  {thumbnailPreview ? (
+                    <img
+                      src={thumbnailPreview}
+                      alt="Selected anime thumbnail preview"
+                      className="w-24 h-32 rounded-xl border border-white/15 object-cover"
+                    />
+                  ) : (
+                    <div className="w-24 h-32 rounded-xl border border-dashed border-white/20 bg-black/20 flex items-center justify-center">
+                      <ImageIcon className="w-8 h-8 text-[#e0c0af]/40" />
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => thumbnailInputRef.current?.click()}
+                      className="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-white text-sm font-bold transition-colors"
+                    >
+                      <span className="inline-flex items-center gap-2">
+                        <ImageIcon className="w-4 h-4" />
+                        {selectedThumbnail ? 'Change Thumbnail' : 'Add Thumbnail'}
+                      </span>
+                    </button>
+
+                    {selectedThumbnail && (
+                      <>
+                        <p className="text-xs text-emerald-300 break-all max-w-xs">
+                          {selectedThumbnail.name}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedThumbnail(null);
+                            setThumbnailPreview((oldPreview) => {
+                              if (oldPreview) URL.revokeObjectURL(oldPreview);
+                              return '';
+                            });
+                            if (thumbnailInputRef.current) {
+                              thumbnailInputRef.current.value = '';
+                            }
+                          }}
+                          className="block text-xs text-red-400 hover:text-red-300"
+                        >
+                          Remove thumbnail
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
 
               {/* Title & Episodes */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
