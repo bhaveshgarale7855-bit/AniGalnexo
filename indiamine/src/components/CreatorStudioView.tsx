@@ -24,7 +24,8 @@ import {
   PUBLISHED_ANIME_LIST,
   DEFAULT_AVATARS,
 } from '../data/animeData';
-import API_BASE_URL from '../lib/api';
+import { getMyVideos } from '../lib/videos';
+import { supabase } from '../lib/supabase';
 
 interface CreatorStudioViewProps {
   onToast: (msg: string) => void;
@@ -56,22 +57,16 @@ export const CreatorStudioView: React.FC<CreatorStudioViewProps> = ({ onToast })
 
     const loadSavedVideos = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/videos`);
+        const videos = await getMyVideos();
 
-        if (!response.ok) {
-          throw new Error('Could not load saved videos.');
-        }
+        if (cancelled) return;
 
-        const videos = await response.json();
-
-        if (cancelled || !Array.isArray(videos)) return;
-
-        const savedItems: PublishedAnimeItem[] = videos.map((video: any) => ({
+        const savedItems: PublishedAnimeItem[] = videos.map((video) => ({
           id: video.id,
           title: video.title,
           thumbnail: '',
-          episodesCount: Number(video.episodesCount) || 1,
-          status: video.status === 'Live' ? 'Live' : 'Pending',
+          episodesCount: video.episodesCount,
+          status: video.status === 'Rejected' ? 'Pending' : video.status,
           views: '--',
           revenue: '--',
           uploadedDate: video.uploadedDate
@@ -83,12 +78,18 @@ export const CreatorStudioView: React.FC<CreatorStudioViewProps> = ({ onToast })
         setPublishedList((current) => {
           const savedIds = new Set(savedItems.map((item) => item.id));
           const demoItems = current.filter((item) => !savedIds.has(item.id));
+
           return [...savedItems, ...demoItems];
         });
       } catch (error) {
         if (!cancelled) {
           console.error('Loading saved anime failed:', error);
-          onToast('Could not load saved videos. Check that the local server is running.');
+
+          onToast(
+            error instanceof Error
+              ? error.message
+              : 'Could not load your saved videos.'
+          );
         }
       }
     };
@@ -100,108 +101,119 @@ export const CreatorStudioView: React.FC<CreatorStudioViewProps> = ({ onToast })
     };
   }, [onToast]);
 
-
   const filteredList = publishedList.filter((item) =>
     item.title.toLowerCase().includes(searchTable.toLowerCase())
   );
+
 
 
   const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!newTitle.trim()) {
-      onToast('Please enter an anime title');
+      onToast('Please enter an anime title.');
       return;
     }
 
-    if (!selectedFile) {
-      onToast('Please select a video file first.');
+    if (!selectedFile || selectedFile.size === 0) {
+      onToast('Please select a valid video file.');
       return;
     }
 
-    if (selectedFile.size === 0) {
-      onToast('The selected video is empty.');
+    if (!supabase) {
+      onToast('Supabase is not configured.');
       return;
     }
 
     setIsUploading(true);
     setUploadProgress(0);
 
+    let uploadedVideoPath: string | null = null;
+    let uploadedThumbnailPath: string | null = null;
+
     try {
-      const initResponse = await fetch(`${API_BASE_URL}/api/uploads/init`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: selectedFile.name,
-          size: selectedFile.size,
-          title: newTitle.trim(),
-          genre: newGenre,
-          episodesCount: Number(newEpisodesCount) || 1,
-          synopsis: newSynopsis,
-        }),
-      });
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
 
-      if (!initResponse.ok) {
-        const error = await initResponse.json();
-        throw new Error(error.error || 'Could not start upload.');
+      if (authError) throw authError;
+
+      if (!user) {
+        throw new Error('Please sign in before uploading.');
       }
 
-      const { uploadId, chunkSize } = await initResponse.json();
-      let uploaded = 0;
-
-      while (uploaded < selectedFile.size) {
-        const chunk = selectedFile.slice(
-          uploaded,
-          Math.min(uploaded + chunkSize, selectedFile.size)
-        );
-
-        const chunkResponse = await fetch(
-          `http://127.0.0.1:4000/api/uploads/${uploadId}/chunk`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/octet-stream',
-              'X-Chunk-Start': String(uploaded),
-            },
-            body: chunk,
-          }
-        );
-
-        if (!chunkResponse.ok) {
-          const error = await chunkResponse.json();
-          throw new Error(error.error || 'Video chunk upload failed.');
-        }
-
-        const result = await chunkResponse.json();
-        uploaded = result.received;
-
-        setUploadProgress(
-          Math.floor((uploaded / selectedFile.size) * 100)
-        );
-      }
-
-      const completeResponse = await fetch(
-        `http://127.0.0.1:4000/api/uploads/${uploadId}/complete`,
-        { method: 'POST' }
+      const safeVideoName = selectedFile.name.replace(
+        /[^a-zA-Z0-9._-]/g,
+        '_'
       );
 
-      if (!completeResponse.ok) {
-        const error = await completeResponse.json();
-        throw new Error(error.error || 'Could not finish the upload.');
+      uploadedVideoPath =
+        `${user.id}/${crypto.randomUUID()}-${safeVideoName}`;
+
+      const { error: videoUploadError } = await supabase.storage
+        .from('anime-videos')
+        .upload(uploadedVideoPath, selectedFile, {
+          contentType: selectedFile.type || 'video/mp4',
+          upsert: false,
+        });
+
+      if (videoUploadError) throw videoUploadError;
+
+      setUploadProgress(70);
+
+      if (selectedThumbnail) {
+        const safeThumbnailName = selectedThumbnail.name.replace(
+          /[^a-zA-Z0-9._-]/g,
+          '_'
+        );
+
+        uploadedThumbnailPath =
+          `${user.id}/${crypto.randomUUID()}-${safeThumbnailName}`;
+
+        const { error: thumbnailUploadError } = await supabase.storage
+          .from('anime-thumbnails')
+          .upload(uploadedThumbnailPath, selectedThumbnail, {
+            contentType: selectedThumbnail.type || 'image/jpeg',
+            upsert: false,
+          });
+
+        if (thumbnailUploadError) throw thumbnailUploadError;
       }
 
-      const { video } = await completeResponse.json();
+      setUploadProgress(90);
+
+      const { data: video, error: insertError } = await supabase
+        .from('videos')
+        .insert({
+          title: newTitle.trim(),
+          description: newSynopsis.trim(),
+          genre: newGenre.trim() || 'Uncategorized',
+          episodes_count: Math.max(1, Number(newEpisodesCount) || 1),
+          video_path: uploadedVideoPath,
+          thumbnail_path: uploadedThumbnailPath,
+          status: 'Pending',
+          created_by: user.id,
+        })
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+
+      setUploadProgress(100);
 
       const newItem: PublishedAnimeItem = {
         id: video.id,
         title: video.title,
-        thumbnail: '',
-        episodesCount: video.episodesCount,
+        thumbnail: thumbnailPreview || '',
+        episodesCount: Number(video.episodes_count) || 1,
         status: 'Pending',
         views: '--',
         revenue: '--',
-        uploadedDate: video.uploadedDate.slice(0, 10),
-        genre: video.genre,
+        uploadedDate: video.created_at
+          ? video.created_at.slice(0, 10)
+          : new Date().toISOString().slice(0, 10),
+        genre: video.genre || 'Uncategorized',
       };
 
       setPublishedList((current) => [
@@ -210,16 +222,41 @@ export const CreatorStudioView: React.FC<CreatorStudioViewProps> = ({ onToast })
       ]);
 
       setNewTitle('');
+      setNewGenre('Cyberpunk, Action');
+      setNewEpisodesCount('1');
       setNewSynopsis('');
       setSelectedFile(null);
+      setSelectedThumbnail(null);
+      setThumbnailPreview('');
+
       if (fileInputRef.current) fileInputRef.current.value = '';
+      if (thumbnailInputRef.current) thumbnailInputRef.current.value = '';
 
       setIsUploadModalOpen(false);
-      onToast(`"${video.title}" saved to your D drive!`);
+      onToast(`"${video.title}" uploaded and submitted for review.`);
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Upload failed.';
-      onToast(message);
+      console.error('Supabase video upload failed:', error);
+
+      // Remove partially uploaded files if a later step fails.
+      if (supabase) {
+        if (uploadedThumbnailPath) {
+          await supabase.storage
+            .from('anime-thumbnails')
+            .remove([uploadedThumbnailPath])
+            .catch(() => ({ data: [], error: null }));
+        }
+
+        if (uploadedVideoPath) {
+          await supabase.storage
+            .from('anime-videos')
+            .remove([uploadedVideoPath])
+            .catch(() => ({ data: [], error: null }));
+        }
+      }
+
+      onToast(
+        error instanceof Error ? error.message : 'Video upload failed.'
+      );
     } finally {
       setIsUploading(false);
     }

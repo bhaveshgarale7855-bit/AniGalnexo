@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { getLiveVideos, getVideoPlaybackUrl, getThumbnailUrl } from '../lib/videos';
 import {
   Search,
   Filter,
@@ -12,6 +13,66 @@ import {
 } from 'lucide-react';
 import { AnimeShow } from '../types';
 import { ANIME_SHOWS } from '../data/animeData';
+
+
+interface UploadedVideo {
+  id: string;
+  title: string;
+  genre?: string;
+  synopsis?: string;
+  videoPath: string;
+  thumbnailPath: string | null;
+  status: 'Pending' | 'Live' | 'Rejected';
+  uploadedDate?: string;
+  episodesCount?: number;
+}
+
+const getVideoGenres = (genre?: string): string[] =>
+  (genre || 'Other')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+const uploadedVideoToShow = (
+  video: UploadedVideo,
+  streamUrl: string,
+  thumbnailUrl?: string
+): AnimeShow => ({
+  id: `upload-${video.id}`,
+  title: video.title,
+  japaneseTitle: undefined,
+  bannerImage: thumbnailUrl || ANIME_SHOWS[0].bannerImage,
+  posterImage: thumbnailUrl || ANIME_SHOWS[0].posterImage,
+  rating: 0,
+  year: video.uploadedDate
+    ? new Date(video.uploadedDate).getFullYear()
+    : new Date().getFullYear(),
+  releaseSeason: 'Community Upload',
+  genres: getVideoGenres(video.genre),
+  tags: ['Community'],
+  description: video.synopsis || 'Community-uploaded anime.',
+  studio: 'Community Creator',
+  director: 'Community Creator',
+  cast: [],
+  licenseExpiresDays: 0,
+  communityScore: 0,
+  creator: ANIME_SHOWS[0].creator,
+  episodes: [
+    {
+      id: `episode-${video.id}`,
+      episodeNumber: 1,
+      title: video.title,
+      duration: 'Full video',
+      durationSeconds: 0,
+      thumbnail: thumbnailUrl || ANIME_SHOWS[0].posterImage,
+      synopsis: video.synopsis || video.title,
+      videoSrc: streamUrl,
+    },
+  ],
+  isOriginal: false,
+  isPremium: false,
+  totalViews: '0',
+});
 
 interface DiscoverViewProps {
   onSelectShow: (show: AnimeShow) => void;
@@ -34,22 +95,97 @@ export const DiscoverView: React.FC<DiscoverViewProps> = ({
   const [visibleCount, setVisibleCount] = useState<number>(8);
   const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
 
+  const [uploadedVideos, setUploadedVideos] = useState<UploadedVideo[]>([]);
+  const [uploadedShowsData, setUploadedShowsData] = useState<AnimeShow[]>([]);
+  const [uploadError, setUploadError] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadVideos = async () => {
+      try {
+        const videos = await getLiveVideos();
+
+        const mappedVideos = await Promise.all(
+          videos.map(async (video) => {
+            const [streamUrl, thumbnailUrl] = await Promise.all([
+              getVideoPlaybackUrl(video.videoPath),
+              video.thumbnailPath
+                ? getThumbnailUrl(video.thumbnailPath).catch(() => undefined)
+                : Promise.resolve(undefined),
+            ]);
+
+            return {
+              video: {
+                id: video.id,
+                title: video.title,
+                genre: video.genre,
+                synopsis: video.description,
+                videoPath: video.videoPath,
+                thumbnailPath: video.thumbnailPath,
+                status: video.status,
+                uploadedDate: video.uploadedDate,
+                episodesCount: video.episodesCount,
+              } satisfies UploadedVideo,
+              show: null as AnimeShow | null,
+              streamUrl,
+              thumbnailUrl,
+            };
+          })
+        );
+
+        if (!cancelled) {
+          setUploadedVideos(mappedVideos.map((item) => item.video));
+          setUploadError('');
+          setUploadedShowsData(
+            mappedVideos.map((item) =>
+              uploadedVideoToShow(item.video, item.streamUrl, item.thumbnailUrl)
+            )
+          );
+        }
+      } catch (error) {
+        console.error('Could not load uploaded videos:', error);
+
+        if (!cancelled) {
+          setUploadError('Uploaded videos could not be loaded.');
+        }
+      }
+    };
+
+    loadVideos();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+const uploadedShows = uploadedShowsData;
+
+  const allShows = useMemo(
+    () => [...ANIME_SHOWS, ...uploadedShows],
+    [uploadedShows]
+  );
+
+
   const genresList = [
     'All',
-    'Action',
-    'Fantasy',
-    'Sci-Fi',
-    'Mecha',
-    'Cyberpunk',
-    'Drama',
-    'Slice of Life',
-    'Romance',
+    ...new Set([
+      'Action',
+      'Fantasy',
+      'Sci-Fi',
+      'Mecha',
+      'Cyberpunk',
+      'Drama',
+      'Slice of Life',
+      'Romance',
+      ...uploadedShows.flatMap((show) => show.genres),
+    ]),
   ];
   const yearList = ['All', '2024', '2023', '2022'];
   const ratingList = ['All', '4.8+', '4.5+'];
 
   const filteredShows = useMemo(() => {
-    return ANIME_SHOWS.filter((show) => {
+    return allShows.filter((show) => {
       // Search
       if (
         searchQuery.trim() &&
@@ -60,7 +196,12 @@ export const DiscoverView: React.FC<DiscoverViewProps> = ({
         return false;
       }
       // Genre
-      if (selectedGenre !== 'All' && !show.genres.includes(selectedGenre)) {
+      if (
+        selectedGenre !== 'All' &&
+        !show.genres.some(
+          (genre) => genre.toLowerCase() === selectedGenre.toLowerCase()
+        )
+      ) {
         return false;
       }
       // Year
@@ -80,7 +221,7 @@ export const DiscoverView: React.FC<DiscoverViewProps> = ({
       if (selectedSort === 'A-Z') return a.title.localeCompare(b.title);
       return b.rating - a.rating;
     });
-  }, [searchQuery, selectedGenre, selectedYear, selectedRating, selectedSort]);
+  }, [allShows, searchQuery, selectedGenre, selectedYear, selectedRating, selectedSort]);
 
   const handleLoadMore = () => {
     setIsLoadingMore(true);
@@ -131,11 +272,10 @@ export const DiscoverView: React.FC<DiscoverViewProps> = ({
             <button
               key={g}
               onClick={() => setSelectedGenre(g)}
-              className={`px-3.5 py-1.5 rounded-full text-[13px] font-semibold transition-all whitespace-nowrap flex-shrink-0 ${
-                selectedGenre === g
-                  ? 'bg-[var(--accent)] text-white shadow-[0_0_12px_var(--accent-glow)] font-bold'
-                  : 'bg-white/5 hover:bg-white/10 text-[#e0c0af] border border-white/5'
-              }`}
+              className={`px-3.5 py-1.5 rounded-full text-[13px] font-semibold transition-all whitespace-nowrap flex-shrink-0 ${selectedGenre === g
+                ? 'bg-[var(--accent)] text-white shadow-[0_0_12px_var(--accent-glow)] font-bold'
+                : 'bg-white/5 hover:bg-white/10 text-[#e0c0af] border border-white/5'
+                }`}
             >
               {g}
             </button>
@@ -275,11 +415,10 @@ export const DiscoverView: React.FC<DiscoverViewProps> = ({
                         e.stopPropagation();
                         onToggleMyList(show.id);
                       }}
-                      className={`px-3 py-1.5 rounded-full text-[12px] font-bold flex items-center gap-1.5 transition-all ${
-                        inList
-                          ? 'bg-white/20 text-white border border-white/30'
-                          : 'bg-[var(--accent)]/30 hover:bg-[var(--accent)] text-white border border-[var(--accent)]/50'
-                      }`}
+                      className={`px-3 py-1.5 rounded-full text-[12px] font-bold flex items-center gap-1.5 transition-all ${inList
+                        ? 'bg-white/20 text-white border border-white/30'
+                        : 'bg-[var(--accent)]/30 hover:bg-[var(--accent)] text-white border border-[var(--accent)]/50'
+                        }`}
                     >
                       {inList ? (
                         <>

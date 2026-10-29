@@ -13,7 +13,7 @@ import {
 import { AnimeShow, Episode } from '../types';
 import { ANIME_SHOWS } from '../data/animeData';
 import React, { useEffect, useState } from 'react';
-import API_BASE_URL from '../lib/api';
+import { getLiveVideos, getVideoPlaybackUrl, getThumbnailUrl } from '../lib/videos';
 
 interface HomeViewProps {
   onSelectShow: (show: AnimeShow) => void;
@@ -40,7 +40,8 @@ export const HomeView: React.FC<HomeViewProps> = ({
     title: string;
     genre?: string;
     synopsis?: string;
-    videoFile: string;
+    videoPath: string;
+    thumbnailPath: string | null;
     status: 'Pending' | 'Live' | 'Rejected';
     uploadedDate?: string;
     episodesCount?: number;
@@ -49,25 +50,37 @@ export const HomeView: React.FC<HomeViewProps> = ({
   const [uploadedVideos, setUploadedVideos] = useState<UploadedVideo[]>([]);
 
   useEffect(() => {
-    const loadUploadedVideos = async () => {
+    let cancelled = false;
+
+    async function loadUploadedVideos() {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/videos`);
+        const videos = await getLiveVideos();
 
-        if (!response.ok) {
-          throw new Error('Failed to load uploaded videos');
+        const mappedVideos = videos.map((video) => ({
+          id: video.id,
+          title: video.title,
+          genre: video.genre,
+          synopsis: video.description,
+          videoPath: video.videoPath,
+          thumbnailPath: video.thumbnailPath,
+          status: video.status,
+          uploadedDate: video.uploadedDate,
+          episodesCount: video.episodesCount,
+        }));
+
+        if (!cancelled) {
+          setUploadedVideos(mappedVideos);
         }
-
-        const data: UploadedVideo[] = await response.json();
-
-        setUploadedVideos(
-          data.filter((video) => video.status === 'Live')
-        );
       } catch (error) {
         console.error('Could not load uploaded videos:', error);
       }
-    };
+    }
 
     loadUploadedVideos();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const isInMyList = myList.includes(heroShow.id);
@@ -87,6 +100,46 @@ export const HomeView: React.FC<HomeViewProps> = ({
       timeLeft: 'Finished',
     },
   ];
+
+
+
+  const handlePlayUploadedVideo = async (video: UploadedVideo) => {
+    try {
+      const [streamUrl, thumbnailUrl] = await Promise.all([
+        getVideoPlaybackUrl(video.videoPath),
+        video.thumbnailPath
+          ? getThumbnailUrl(video.thumbnailPath).catch(() => undefined)
+          : Promise.resolve(undefined),
+      ]);
+
+      const episode: Episode = {
+        id: video.id,
+        episodeNumber: 1,
+        title: video.title,
+        duration: '',
+        durationSeconds: 0,
+        thumbnail: thumbnailUrl || ANIME_SHOWS[0].posterImage,
+        synopsis: video.synopsis ?? '',
+        videoSrc: streamUrl,
+      };
+
+      const uploadedShow: AnimeShow = {
+        ...ANIME_SHOWS[0],
+        id: `uploaded-${video.id}`,
+        title: video.title,
+        description: video.synopsis ?? '',
+        genres: [video.genre || 'Anime'],
+        episodes: [episode],
+        posterImage: thumbnailUrl || ANIME_SHOWS[0].posterImage,
+        bannerImage: thumbnailUrl || ANIME_SHOWS[0].bannerImage,
+      };
+
+      onPlayEpisode(uploadedShow, episode);
+    } catch (error) {
+      console.error('Could not play uploaded video:', error);
+      alert('Video play nahi ho paya. Please try again.');
+    }
+  };
 
   return (
     <div className="space-y-12 pb-24 lg:pb-16 animate-in fade-in duration-300">
@@ -267,12 +320,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
               <button
                 key={video.id}
                 type="button"
-                onClick={() =>
-                  window.open(
-                    `${API_BASE_URL}/api/videos/${video.id}/stream`,
-                    '_blank'
-                  )
-                }
+                onClick={() => void handlePlayUploadedVideo(video)}
                 className="text-left group bg-[#191b24]/70 border border-white/10 rounded-2xl overflow-hidden hover:border-[var(--accent)]/60 transition-all"
               >
                 <div className="aspect-[2/3] bg-gradient-to-br from-[#241c2c] to-[#11131c] flex flex-col items-center justify-center p-4">
@@ -423,7 +471,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
         </div>
       </section>
 
-      {/* Creator Studio Showcase Banner */}
+      {/* Creator Studio Showcase Banner
       <div className="relative w-full rounded-3xl overflow-hidden bg-gradient-to-r from-[#191b24] via-[#241c2c] to-[#191b24] border border-[var(--accent)]/30 p-6 sm:p-10 flex flex-col lg:flex-row items-center justify-between gap-6 shadow-[0_0_30px_var(--accent-glow)]">
         <div className="space-y-2 text-center lg:text-left max-w-xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--accent)]/20 text-[var(--accent)] text-[12px] font-bold">
@@ -446,7 +494,7 @@ export const HomeView: React.FC<HomeViewProps> = ({
           <span>Open Creator Dashboard</span>
           <ChevronRight className="w-4 h-4" />
         </button>
-      </div>
+      </div> */}
     </div>
   );
 };

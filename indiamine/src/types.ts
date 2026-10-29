@@ -42,6 +42,7 @@ export interface Episode {
 export interface AnimeShow {
   id: string;
   title: string;
+  videoSrc?: string;
   japaneseTitle?: string;
   bannerImage: string;
   posterImage: string;

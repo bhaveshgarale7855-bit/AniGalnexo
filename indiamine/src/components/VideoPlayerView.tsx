@@ -49,9 +49,11 @@ export const VideoPlayerView: React.FC<VideoPlayerViewProps> = ({
   const [currentEpisode, setCurrentEpisode] = useState<Episode>(
     initialEpisode || show.episodes[0]
   );
-  const [isPlaying, setIsPlaying] = useState<boolean>(true);
-  const [currentTimeSec, setCurrentTimeSec] = useState<number>(263); // 4:23
-  const [totalTimeSec] = useState<number>(currentEpisode?.durationSeconds || 1440);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTimeSec, setCurrentTimeSec] = useState(0);
+  const [totalTimeSec, setTotalTimeSec] = useState(0);
+
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [volume, setVolume] = useState<number>(85);
   const [isMuted, setIsMuted] = useState<boolean>(false);
   const [quality, setQuality] = useState<string>('1080p FHD');
@@ -63,15 +65,41 @@ export const VideoPlayerView: React.FC<VideoPlayerViewProps> = ({
   const [likesCount, setLikesCount] = useState<number>(14250);
   const [showControls, setShowControls] = useState<boolean>(true);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [isVideoReady, setIsVideoReady] = useState(false);
 
   const playerContainerRef = useRef<HTMLDivElement>(null);
   const controlsTimeoutRef = useRef<any>(null);
 
   const isInMyList = myList.includes(show.id);
-  const handlePlayPause = () => {
-    onRequireLogin();
+  const handlePlayPause = async () => {
+    const video = videoRef.current;
+
+    if (!video || !videoSrc) {
+      onToast('Actual video source is not available.');
+      return;
+    }
+
+    if (video.paused) {
+      try {
+        await video.play();
+      } catch (error) {
+        console.error('Video playback failed:', error);
+        onToast('Video could not play. Please try again.');
+      }
+    } else {
+      video.pause();
+    }
   };
 
+  const seekBy = (seconds: number) => {
+    const video = videoRef.current;
+    if (!video || !Number.isFinite(video.duration)) return;
+
+    video.currentTime = Math.max(
+      0,
+      Math.min(video.duration, video.currentTime + seconds)
+    );
+  };
   // Playback timer simulation
   useEffect(() => {
     let interval: any = null;
@@ -104,7 +132,14 @@ export const VideoPlayerView: React.FC<VideoPlayerViewProps> = ({
   };
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCurrentTimeSec(Number(e.target.value));
+    const time = Number(e.target.value);
+    if (!Number.isFinite(time)) return;
+
+    if (videoRef.current) {
+      videoRef.current.currentTime = time;
+    }
+
+    setCurrentTimeSec(time);
   };
 
   const handleToggleLike = () => {
@@ -177,6 +212,8 @@ export const VideoPlayerView: React.FC<VideoPlayerViewProps> = ({
     },
   ];
 
+
+  const videoSrc = currentEpisode?.videoSrc || show.videoSrc;
   const backdropScene =
     'https://lh3.googleusercontent.com/aida-public/AB6AXuCsK9mOFe5UUyycxys9xopKEs2rmBYILfwOCiPns6uIH7ON5QGQPaFHQPvd_ady9Hg0FSC57CI_h90wxHEr4VTysoIOOV9dEUuSKxFicTkC9pz8QnVUdJaujcy7Xv2bpUBbXZ7r5l3t4Rz5mHRmAU5CHdkCbWHN8GYxMu9XBUqmFVVi9l4HdMSxF7oIEGn0soFQ2Y8BeMEamLkAzBL335u5TcPkzfKgEI7xrs75DTvHaKUJXWh4YkVqDA';
 
@@ -198,15 +235,41 @@ export const VideoPlayerView: React.FC<VideoPlayerViewProps> = ({
         className="relative w-full aspect-video max-h-[75vh] bg-black rounded-3xl overflow-hidden shadow-2xl border border-white/15 select-none group"
       >
         {/* Active Scene Backdrop */}
-        <div className="absolute inset-0">
-          <img
-            src={backdropScene}
-            alt="Video Scene"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-black/20" />
+        {/* Actual Video Player */}
+        <div className="absolute inset-0 bg-black">
+          {videoSrc ? (
+            <video
+              ref={videoRef}
+              src={videoSrc}
+              className="absolute inset-0 h-full w-full object-contain"
+              playsInline
+              preload="metadata"
+              onLoadedMetadata={(event) => {
+                const duration = event.currentTarget.duration;
+                if (Number.isFinite(duration)) {
+                  setTotalTimeSec(duration);
+                }
+              }}
+              onTimeUpdate={(event) => {
+                setCurrentTimeSec(event.currentTarget.currentTime);
+              }}
+              onPlay={() => setIsPlaying(true)}
+              onPause={() => setIsPlaying(false)}
+              onEnded={() => setIsPlaying(false)}
+              onError={(event) => {
+                console.error(
+                  'Video element error:',
+                  event.currentTarget.error
+                );
+                onToast('Video failed to load. Check its source or format.');
+              }}
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center text-white/70">
+              Video source is missing.
+            </div>
+          )}
         </div>
-
         {/* Top Floating Info & Back */}
         <div
           className={`absolute top-0 left-0 right-0 p-4 sm:p-6 bg-gradient-to-b from-black/80 via-black/40 to-transparent flex items-center justify-between transition-opacity duration-300 z-20 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'
@@ -238,7 +301,10 @@ export const VideoPlayerView: React.FC<VideoPlayerViewProps> = ({
 
         {/* Center Play/Pause Large Action (Click anywhere or center icon) */}
         <div
-          onClick={() => setIsPlaying(!isPlaying)}
+          onClick={(event) => {
+            event.stopPropagation();
+            void handlePlayPause();
+          }}
           className="absolute inset-0 flex items-center justify-center cursor-pointer z-10"
         >
           {(!isPlaying || showControls) && (
@@ -284,7 +350,7 @@ export const VideoPlayerView: React.FC<VideoPlayerViewProps> = ({
             {/* Left Controls */}
             <div className="flex items-center gap-3 sm:gap-5">
               <button
-                onClick={() => setIsPlaying(!isPlaying)}
+                onClick={() => void handlePlayPause()}
                 className="p-1 text-white hover:text-[var(--accent)] transition-colors"
               >
                 {isPlaying ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current" />}
@@ -344,8 +410,8 @@ export const VideoPlayerView: React.FC<VideoPlayerViewProps> = ({
                 <button
                   onClick={() => setShowSubtitleMenu(!showSubtitleMenu)}
                   className={`p-1.5 rounded-lg transition-colors ${showSubtitleMenu
-                      ? 'bg-[var(--accent)] text-white'
-                      : 'text-[#e0c0af] hover:text-white'
+                    ? 'bg-[var(--accent)] text-white'
+                    : 'text-[#e0c0af] hover:text-white'
                     }`}
                   title="Subtitles & Audio"
                 >
@@ -368,8 +434,8 @@ export const VideoPlayerView: React.FC<VideoPlayerViewProps> = ({
                               onToast(`Audio switched to ${aud}`);
                             }}
                             className={`w-full text-left px-2.5 py-1.5 rounded-lg font-medium transition-colors ${audioLang === aud
-                                ? 'bg-[var(--accent)]/20 text-[var(--accent)] font-bold'
-                                : 'text-[#e0c0af] hover:bg-white/10'
+                              ? 'bg-[var(--accent)]/20 text-[var(--accent)] font-bold'
+                              : 'text-[#e0c0af] hover:bg-white/10'
                               }`}
                           >
                             {aud}
@@ -391,8 +457,8 @@ export const VideoPlayerView: React.FC<VideoPlayerViewProps> = ({
                             onToast(`Subtitles: ${sub}`);
                           }}
                           className={`w-full text-left px-2.5 py-1.5 rounded-lg font-medium transition-colors ${subtitleLang === sub
-                              ? 'bg-[var(--accent)]/20 text-[var(--accent)] font-bold'
-                              : 'text-[#e0c0af] hover:bg-white/10'
+                            ? 'bg-[var(--accent)]/20 text-[var(--accent)] font-bold'
+                            : 'text-[#e0c0af] hover:bg-white/10'
                             }`}
                         >
                           {sub}
@@ -433,8 +499,8 @@ export const VideoPlayerView: React.FC<VideoPlayerViewProps> = ({
                             }
                           }}
                           className={`w-full text-left px-2.5 py-1.5 rounded-lg font-medium transition-colors ${quality === q
-                              ? 'bg-[var(--accent)]/20 text-[var(--accent)] font-bold'
-                              : 'text-[#e0c0af] hover:bg-white/10'
+                            ? 'bg-[var(--accent)]/20 text-[var(--accent)] font-bold'
+                            : 'text-[#e0c0af] hover:bg-white/10'
                             }`}
                         >
                           {q}
@@ -482,8 +548,8 @@ export const VideoPlayerView: React.FC<VideoPlayerViewProps> = ({
                 <button
                   onClick={handleToggleLike}
                   className={`px-4 py-2 rounded-xl font-bold text-[13px] flex items-center gap-2 transition-all border ${isLiked
-                      ? 'bg-[var(--accent)] text-white border-[var(--accent)] shadow-[0_0_12px_var(--accent)]'
-                      : 'bg-white/5 hover:bg-white/10 text-white border-white/10'
+                    ? 'bg-[var(--accent)] text-white border-[var(--accent)] shadow-[0_0_12px_var(--accent)]'
+                    : 'bg-white/5 hover:bg-white/10 text-white border-white/10'
                     }`}
                 >
                   <ThumbsUp className={`w-4 h-4 ${isLiked ? 'fill-current' : ''}`} />
@@ -501,8 +567,8 @@ export const VideoPlayerView: React.FC<VideoPlayerViewProps> = ({
                 <button
                   onClick={() => onToggleMyList(show.id)}
                   className={`px-4 py-2 rounded-xl font-bold text-[13px] flex items-center gap-2 transition-all border ${isInMyList
-                      ? 'bg-white/20 border-white/40 text-white'
-                      : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'
+                    ? 'bg-white/20 border-white/40 text-white'
+                    : 'bg-white/5 hover:bg-white/10 border-white/10 text-white'
                     }`}
                 >
                   {isInMyList ? <Check className="w-4 h-4 text-emerald-400" /> : <Plus className="w-4 h-4" />}
@@ -650,8 +716,8 @@ export const VideoPlayerView: React.FC<VideoPlayerViewProps> = ({
                       }
                     }}
                     className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center gap-3 ${isActive
-                        ? 'bg-[var(--accent)]/15 border-[var(--accent)] shadow-[0_0_15px_var(--accent-glow)]'
-                        : 'bg-white/5 border-white/5 hover:bg-white/10'
+                      ? 'bg-[var(--accent)]/15 border-[var(--accent)] shadow-[0_0_15px_var(--accent-glow)]'
+                      : 'bg-white/5 border-white/5 hover:bg-white/10'
                       }`}
                   >
                     <div className="relative w-20 aspect-video rounded-lg overflow-hidden flex-shrink-0 bg-black/40">

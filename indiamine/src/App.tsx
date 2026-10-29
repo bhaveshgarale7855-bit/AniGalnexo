@@ -65,6 +65,10 @@ export default function App() {
     let alive = true;
 
     const applyAuthUser = async (authUser: import('@supabase/supabase-js').User) => {
+      if (!supabase) {
+        console.error('Supabase client is not configured.');
+        return;
+      }
       const { data: adminRecord, error: adminError } = await supabase
         .from('admin_users')
         .select('user_id')
@@ -396,8 +400,8 @@ export default function App() {
             showToast(`Welcome back, ${user.name}!`);
           }
         }}>
-          
-        </AuthModal>
+
+      </AuthModal>
 
       <PremiumModal
         isOpen={isPremiumOpen}

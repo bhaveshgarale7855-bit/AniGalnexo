@@ -22,10 +22,111 @@ export function AIChatbot({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState(() => {
+    try {
+      const saved = localStorage.getItem('anigalnexo-chat-position');
+      if (saved) return JSON.parse(saved);
+    } catch { }
+
+    return { right: 20, bottom: 20 };
+  });
+
+  const [isDragging, setIsDragging] = useState(false);
+
+  const dragRef = useRef({
+    active: false,
+    moved: false,
+    startX: 0,
+    startY: 0,
+    initialRight: 20,
+    initialBottom: 20,
+  });
+
+  const dragButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isLoading]);
+
+  const handlePointerDown = (
+    event: React.PointerEvent<HTMLButtonElement>
+  ) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return;
+
+    event.preventDefault();
+
+    dragRef.current = {
+      active: true,
+      moved: false,
+      startX: event.clientX,
+      startY: event.clientY,
+      initialRight: position.right,
+      initialBottom: position.bottom,
+    };
+
+    setIsDragging(false);
+
+    try {
+      event.currentTarget.setPointerCapture(event.pointerId);
+    } catch (error) {
+      console.debug('Pointer capture unavailable:', error);
+    }
+  };
+
+  const handlePointerMove = (event: React.PointerEvent<HTMLButtonElement>) => {
+    const drag = dragRef.current;
+    if (!drag.active) return;
+
+    const dx = event.clientX - drag.startX;
+    const dy = event.clientY - drag.startY;
+
+    if (!drag.moved && Math.hypot(dx, dy) > 5) {
+      drag.moved = true;
+      setIsDragging(true);
+    }
+
+    if (!drag.moved) return;
+
+    const button = dragButtonRef.current;
+    const size = button?.getBoundingClientRect().width ?? 56;
+
+    const maxRight = Math.max(8, window.innerWidth - size - 8);
+    const maxBottom = Math.max(8, window.innerHeight - size - 8);
+
+    setPosition({
+      right: Math.min(maxRight, Math.max(8, drag.initialRight - dx)),
+      bottom: Math.min(maxBottom, Math.max(8, drag.initialBottom - dy)),
+    });
+  };
+
+  const handlePointerUp = () => {
+    if (!dragRef.current.active) return;
+
+    dragRef.current.active = false;
+
+    if (dragRef.current.moved) {
+      try {
+        localStorage.setItem(
+          'anigalnexo-chat-position',
+          JSON.stringify(position)
+        );
+      } catch { }
+    }
+
+    // Prevent the click generated after dragging from opening the chat.
+    if (dragRef.current.moved) {
+      window.setTimeout(() => setIsDragging(false), 0);
+    }
+  };
+
+  const handleFloatingButtonClick = () => {
+    if (isDragging || dragRef.current.moved) {
+      dragRef.current.moved = false;
+      return;
+    }
+
+    handleOpen();
+  };
 
   const handleOpen = () => {
     if (!isLoggedIn) {
@@ -104,7 +205,7 @@ export function AIChatbot({
         if (!retryable || attempt === 2) {
           throw new Error(
             result?.error?.message ||
-              `Gemini API request failed (${response.status})`
+            `Gemini API request failed (${response.status})`
           );
         }
 
@@ -147,7 +248,13 @@ export function AIChatbot({
   return (
     <>
       {isOpen && (
-        <section className="fixed bottom-24 right-4 z-[100] flex h-[min(520px,70vh)] w-[min(360px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#151522] text-white shadow-2xl">
+        <section
+          className="fixed z-[100] flex h-[min(520px,70vh)] w-[min(360px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-white/10 bg-[#151522] text-white shadow-2xl"
+          style={{
+            right: `${Math.max(8, Math.min(position.right, window.innerWidth - 376))}px`,
+            bottom: `${position.bottom + 72}px`,
+          }}
+        >
           <header className="flex items-center justify-between border-b border-white/10 bg-[#201d32] p-4">
             <div className="flex items-center gap-3">
               <div className="rounded-xl bg-violet-500/20 p-2">
@@ -186,11 +293,10 @@ export function AIChatbot({
             {messages.map((item, index) => (
               <div
                 key={`${index}-${item.role}`}
-                className={`max-w-[90%] whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-sm ${
-                  item.role === 'user'
-                    ? 'self-end bg-violet-600 text-white'
-                    : 'self-start border border-white/10 bg-[#201d32] text-gray-200'
-                }`}
+                className={`max-w-[90%] whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-sm ${item.role === 'user'
+                  ? 'self-end bg-violet-600 text-white'
+                  : 'self-start border border-white/10 bg-[#201d32] text-gray-200'
+                  }`}
               >
                 {item.content}
               </div>
@@ -235,15 +341,28 @@ export function AIChatbot({
               <Send size={18} />
             </button>
           </form>
-        </section>
-      )}
+        </section >
+      )
+      }
 
       <button
+        ref={dragButtonRef}
         type="button"
-        onClick={handleOpen}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onClick={handleFloatingButtonClick}
         aria-label="Open AI chatbot"
         title={isLoggedIn ? 'Chat with AniGalnexo AI' : 'Log in to use AI Chat'}
-        className="fixed bottom-5 right-5 z-[100] flex h-14 w-14 items-center justify-center rounded-full border border-violet-300/30 bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-[0_8px_30px_rgba(109,40,217,0.4)] transition hover:scale-105"
+        style={{
+          position: 'fixed',
+          right: `${position.right}px`,
+          bottom: `${position.bottom}px`,
+          touchAction: 'none',
+          cursor: isDragging ? 'grabbing' : 'grab',
+        }}
+        className="z-[100] flex h-14 w-14 items-center justify-center rounded-full border border-violet-300/30 bg-gradient-to-br from-violet-600 to-indigo-600 text-white shadow-[0_8px_30px_rgba(109,40,217,0.4)] transition-transform hover:scale-105"
       >
         {isLoggedIn ? <MessageCircle size={25} /> : <Lock size={23} />}
       </button>

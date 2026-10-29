@@ -1,4 +1,5 @@
-import API_BASE_URL from '../lib/api';
+import { supabase } from '../lib/supabase';
+import { getThumbnailUrl } from '../lib/videos';
 import { ANIME_SHOWS } from '../data/animeData';
 import { ProfileView } from './ProfileView';
 import { SettingsView } from './SettingsView';
@@ -25,7 +26,6 @@ import {
   AlertCircle,
   Film,
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
 
 type Stats = {
   total_users: number;
@@ -229,18 +229,24 @@ export default function AdminDashboardView() {
     metadata?: Record<string, unknown>;
   };
 
+
   type LocalVideo = {
     id: string;
     title: string;
-    genre?: string;
-    synopsis?: string;
-    episodesCount?: number;
-    status: string;
-    uploadedDate?: string;
-    originalName?: string;
-    thumbnailFile?: string;
-    videoFile?: string;
-    size?: number;
+    description: string;
+    synopsis: string;
+    genre: string;
+    episodes_count: number;
+    episodesCount: number;
+    status: 'Pending' | 'Live' | 'Rejected';
+    created_at: string;
+    uploadedDate: string;
+    video_path: string;
+    videoFile: string;
+    originalName: string;
+    thumbnail_path: string | null;
+    thumbnailFile: string | null;
+    created_by: string | null;
   };
 
   const [localVideos, setLocalVideos] = useState<LocalVideo[]>([]);
@@ -286,51 +292,66 @@ export default function AdminDashboardView() {
   };
 
   const loadLocalVideos = useCallback(async () => {
+    if (!supabase) {
+      setLocalVideosError('Supabase is not configured.');
+      return;
+    }
+
     setLocalVideosLoading(true);
     setLocalVideosError('');
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/videos`);
+      const { data, error } = await supabase
+        .from('videos')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-      if (!response.ok) {
-        throw new Error(`Server returned ${response.status}`);
-      }
+      if (error) throw error;
 
-      const data: LocalVideo[] = await response.json();
-      setLocalVideos(Array.isArray(data) ? data : []);
+      setLocalVideos(
+        (data ?? []).map((row) => ({
+          ...row,
+          synopsis: row.description ?? '',
+          episodesCount: Number(row.episodes_count) || 1,
+          uploadedDate: row.created_at,
+          videoFile: row.video_path,
+          originalName: row.video_path?.split('/').pop() ?? '',
+          thumbnailFile: row.thumbnail_path,
+        })) as LocalVideo[]
+      );
     } catch (error) {
       setLocalVideosError(
         error instanceof Error
           ? error.message
-          : 'Could not load uploaded videos.'
+          : 'Could not load submitted videos.'
       );
     } finally {
       setLocalVideosLoading(false);
     }
   }, []);
 
-
   const updateLocalVideoStatus = async (
     id: string,
     status: 'Live' | 'Rejected'
   ) => {
+    if (!supabase) {
+      window.alert('Supabase is not configured.');
+      return;
+    }
+
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/videos/${encodeURIComponent(id)}/status`
-        , {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status }),
-        }
-      );
+      const { error } = await supabase
+        .from('videos')
+        .update({
+          status,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', id);
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Status update failed.');
-      }
+      if (error) throw error;
 
       await loadLocalVideos();
+
       window.alert(
         status === 'Live'
           ? 'Video approved and marked Live.'
@@ -344,7 +365,6 @@ export default function AdminDashboardView() {
       );
     }
   };
-
 
   useEffect(() => {
     void loadStats();
