@@ -12,6 +12,7 @@ import {
   CheckCircle,
 } from 'lucide-react';
 import { User, AnimeShow } from '../types';
+import { Download } from 'lucide-react';
 import { ANIME_SHOWS, BRAND_LOGO_URL } from '../data/animeData';
 
 interface HeaderProps {
@@ -45,11 +46,11 @@ export const Header: React.FC<HeaderProps> = ({
   // Filter shows live for autocomplete search
   const searchResults = searchQuery.trim()
     ? ANIME_SHOWS.filter(
-        (s) =>
-          s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          s.genres.some((g) => g.toLowerCase().includes(searchQuery.toLowerCase())) ||
-          s.description.toLowerCase().includes(searchQuery.toLowerCase())
-      ).slice(0, 5)
+      (s) =>
+        s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.genres.some((g) => g.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        s.description.toLowerCase().includes(searchQuery.toLowerCase())
+    ).slice(0, 5)
     : [];
 
   useEffect(() => {
@@ -171,6 +172,21 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <Crown className="w-3.5 h-3.5 text-[var(--accent)]" />
           <span>VIP Pass</span>
+        </button>
+
+
+        {/* Download App Button */}
+        <button
+          type="button"
+          onClick={() => {
+            window.alert(
+              'Coming Soon! The AniGalnexo app is coming soon. Stay tuned!'
+            );
+          }}
+          className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3.5 py-2 sm:py-1.5 rounded-full bg-[var(--accent)]/15 border border-[var(--accent)]/40 text-[var(--accent)] hover:bg-[var(--accent)]/25 hover:text-white text-[10px] sm:text-[12px] font-bold transition-all whitespace-nowrap"
+        >
+          <Download className="w-3.5 h-3.5 shrink-0" />
+          <span>Download App</span>
         </button>
 
         {/* Notifications Popover */}

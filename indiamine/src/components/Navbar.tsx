@@ -11,6 +11,7 @@ import {
   UploadCloud,
   Sparkles,
   Settings,
+  Download,
 } from 'lucide-react';
 import { ViewMode, User as UserType } from '../types';
 import { BRAND_LOGO_URL } from '../data/animeData';
@@ -221,6 +222,19 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             <Crown className="w-4 h-4" />
             <span>Go Premium</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() =>
+              window.alert(
+                'Coming Soon! The AniGalnexo app is coming soon. Stay tuned!'
+              )
+            }
+            className="w-full mt-3 py-3 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold text-[14px] rounded-xl transition-all duration-300 flex items-center justify-center gap-2"
+          >
+            <Download className="w-4 h-4" />
+            <span>Download App</span>
           </button>
         </div>
       </aside>
