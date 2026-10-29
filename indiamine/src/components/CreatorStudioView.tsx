@@ -19,11 +19,7 @@ import {
   BookOpen,
 } from 'lucide-react';
 import { PublishedAnimeItem, CreatorStats } from '../types';
-import {
-  CREATOR_DASHBOARD_STATS,
-  PUBLISHED_ANIME_LIST,
-  DEFAULT_AVATARS,
-} from '../data/animeData';
+import { DEFAULT_AVATARS } from '../data/animeData';
 import { getMyVideos } from '../lib/videos';
 import { supabase } from '../lib/supabase';
 
@@ -32,8 +28,16 @@ interface CreatorStudioViewProps {
 }
 
 export const CreatorStudioView: React.FC<CreatorStudioViewProps> = ({ onToast }) => {
-  const [stats] = useState<CreatorStats>(CREATOR_DASHBOARD_STATS);
-  const [publishedList, setPublishedList] = useState<PublishedAnimeItem[]>(PUBLISHED_ANIME_LIST);
+  const [stats, setStats] = useState<CreatorStats>({
+    totalViews: '0',
+    viewsGrowth: 0,
+    followers: 0,
+    followersGrowth: 0,
+    revenueEarned: 0,
+    revenueGrowth: 0,
+  });
+
+  const [publishedList, setPublishedList] = useState<PublishedAnimeItem[]>([]);
   const [searchTable, setSearchTable] = useState('');
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isPolicyModalOpen, setIsPolicyModalOpen] = useState(false);
@@ -75,12 +79,7 @@ export const CreatorStudioView: React.FC<CreatorStudioViewProps> = ({ onToast })
           genre: video.genre || 'Uncategorized',
         }));
 
-        setPublishedList((current) => {
-          const savedIds = new Set(savedItems.map((item) => item.id));
-          const demoItems = current.filter((item) => !savedIds.has(item.id));
-
-          return [...savedItems, ...demoItems];
-        });
+        setPublishedList(savedItems);
       } catch (error) {
         if (!cancelled) {
           console.error('Loading saved anime failed:', error);
@@ -278,7 +277,7 @@ export const CreatorStudioView: React.FC<CreatorStudioViewProps> = ({ onToast })
             Dashboard Overview
           </h1>
           <p className="text-[14px] text-[#e0c0af]/80 mt-0.5">
-            Welcome back, <span className="text-white font-semibold">Aarya Sharma</span>. Here's
+            Welcome back! Here's
             your creative analytics and publishing hub.
           </p>
         </div>

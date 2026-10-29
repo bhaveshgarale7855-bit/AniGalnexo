@@ -174,7 +174,7 @@ export const SettingsView: React.FC = () => {
     );
 
     const accentColors = [
-        { name: 'Orange', value: 'var(--accent)' },
+        { name: 'Default', value: 'var(--accent)' },
         { name: 'Blue', value: '#3b82f6' },
         { name: 'Purple', value: '#a855f7' },
         { name: 'Emerald', value: '#10b981' },

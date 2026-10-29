@@ -243,7 +243,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }
           {activeRole === 'admin' && 'Authorized administrators only.'}
         </p>
 
-        {activeRole !== 'admin' && (
+        {/* {activeRole !== 'admin' && (
           <button
             type="button"
             onClick={handleGoogleLogin}
@@ -252,7 +252,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLogin }
           >
             Continue with Google
           </button>
-        )}
+        )} */}
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-3.5">
